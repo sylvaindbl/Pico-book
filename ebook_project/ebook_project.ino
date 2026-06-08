@@ -43,6 +43,7 @@ void loop() {
   int joy_x   = analogRead(JOY_X);         // 0 - 1023
   int joy_y   = analogRead(JOY_Y);         // 0 - 1023
   bool btn    = !digitalRead(JOY_BTN);     // true when pressed
+
   // ── Draw ────────────────────────────────────────────
   display.clearDisplay();
 
@@ -52,7 +53,6 @@ void loop() {
     display.print((char)27);//left arrow symbol
   } else if(600>joy_x && joy_x>500) {
     display.print((char)26);//right arrow symbol
-    
   } else if(joy_y==0) {
     display.print((char)24);//up arrow symbol
     if (speed<100) speed++;
@@ -66,9 +66,7 @@ void loop() {
   display.print("--the pico book--");
 
   display.setCursor(0, 20);
-  display.print("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
-  display.setCursor(1, 20);
-  display.print("Lorem");
+  display.print("Lorem ipsum dolor sitet amet, consectetur adipiscing elit.");
 
   //print speed on the right bottom corner of the display
   display.setCursor(SCREEN_WIDTH-9*6, SCREEN_HEIGHT-10);
@@ -76,6 +74,9 @@ void loop() {
   char buffer[4];
   sprintf(buffer,"%3d", speed); //format speed to be aligned on the right of the screen
   display.print(buffer);
+
+  // ── scrolling feature ────────────────────────────
+
 
   //update the display
   display.display();
