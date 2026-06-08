@@ -38,6 +38,7 @@ void setup() {
 }
 int speed=0;
 void loop() {
+  //scrolling feature added
   // ── Read joystick ───────────────────────────────────
   int joy_x   = analogRead(JOY_X);         // 0 - 1023
   int joy_y   = analogRead(JOY_Y);         // 0 - 1023
