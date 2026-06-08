@@ -7,6 +7,7 @@
 #define SCREEN_HEIGHT 64
 #define OLED_RESET    -1
 #define OLED_ADDRESS  0x3C
+#define CHARACTER_WIDTH 5
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
@@ -34,7 +35,7 @@ void setup() {
   display.setCursor(20, 28);
   display.print("Ready to build!");
   display.display();
-  delay(1500);
+  delay(1000);
 }
 int speed=0;
 void loop() {
@@ -46,6 +47,7 @@ void loop() {
   // ── Draw ────────────────────────────────────────────
   display.clearDisplay();
 
+  //indicate joysticks input
   display.setCursor(0, 0);
   if (joy_x==0){
     display.print((char)27);//left arrow symbol
@@ -58,7 +60,7 @@ void loop() {
     display.print((char)25);//down arrown symbol
     if (speed>0) speed--;
   } else if(btn==true){
-    display.print((char)7);//center => square symbol
+    display.print((char)7);//button press => circle symbol
   }
   display.setCursor(10,0);
   display.print("--the pico book--");
@@ -66,15 +68,17 @@ void loop() {
   display.setCursor(0, 20);
   display.print("Lorem ipsum dolor sitet amet, consectetur adipiscing elit.");
 
-  display.setCursor(SCREEN_WIDTH-11*5, SCREEN_HEIGHT-10);
+  //print speed on the right bottom corner of the display
+  display.setCursor(SCREEN_WIDTH-9*6, SCREEN_HEIGHT-10);
   display.print("speed:");
   char buffer[4];
-  sprintf(buffer,"%3d", speed);
+  sprintf(buffer,"%3d", speed); //format speed to be aligned on the right of the screen
   display.print(buffer);
 
   // ── scrolling feature ────────────────────────────
 
 
+  //update the display
   display.display();
   delay(30);
 }
