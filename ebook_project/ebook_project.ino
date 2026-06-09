@@ -1,7 +1,6 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <fonts/FreeMonoBold12pt7b.h>
 
 // ── Display ──────────────────────────────────────────
 #define SCREEN_WIDTH  128
@@ -63,33 +62,21 @@ void loop() {
   } else if(btn==true){
     display.print((char)7);//button press => circle symbol
   }
-
-  //title
   display.setCursor(10,0);
   display.print("--the pico book--");
 
+  display.setCursor(0, 20);
+  display.print("Lorem ipsum dolor sitet amet, consectetur adipiscing elit.");
+
   //print speed on the right bottom corner of the display
-  display.setFont();
   display.setCursor(SCREEN_WIDTH-9*6, SCREEN_HEIGHT-10);
   display.print("speed:");
   char buffer[4];
   sprintf(buffer,"%3d", speed); //format speed to be aligned on the right of the screen
   display.print(buffer);
 
-  //printing the text
-  int y = 0; //y coordinate of the display
-  int x = 0; //x coordinate of the display
-  const char* lines[] = {
-    "Lorem ipsum", "dolor sit amet", "consetetur sadipcing", "elitr.",
-  };
-  int lineCount = 4;
-  display.setFont(&FreeMonoBold12pt7b);
-  y = 24;
-  display.setCursor(0, y);
-  for (int i = 0; i < lineCount; i++) {
-    display.print(lines[i]);
-    display.setCursor(0, y += 12);
-  }
+  // ── scrolling feature ────────────────────────────
+
 
   //update the display
   display.display();
