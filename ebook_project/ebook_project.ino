@@ -33,7 +33,7 @@ void setup() {
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(1);
   display.setCursor(20, 28);
-  display.print("building!");
+  display.print("building...");
   display.display();
   delay(1000);
 }
@@ -41,18 +41,49 @@ int speed=50;
 int highlighted_word=0;
 bool highlight;
 bool lastbtnstate=false;
-void settings(){
-  highlight? highlight=false:highlight=true;
-}
-
+int current_page=0;
 void loop() {
   // ── Read joystick ───────────────────────────────────
-  int joy_x   = analogRead(JOY_X);         // 0 - 1023
-  int joy_y   = analogRead(JOY_Y);         // 0 - 1023
-  bool btn    = !digitalRead(JOY_BTN);     // true when button is pressed
-
+    int joy_x   = analogRead(JOY_X);         // 0 - 1023
+    int joy_y   = analogRead(JOY_Y);         // 0 - 1023
+    bool btn    = !digitalRead(JOY_BTN);     // true when button is pressed
   // ── Draw ────────────────────────────────────────────
+  display.setCursor(5, 0);
   display.clearDisplay();
+  if (current_page==1){
+    settings_page(joy_x, joy_y, btn);
+  } else {
+    main_page(joy_x, joy_y, btn);
+  } 
+    //update the display
+  display.display();
+  delay(200);
+}
+
+void settings_page(int joy_x, int joy_y, bool btn){
+  
+  display.setCursor(0, 0);
+
+    if (joy_x==0){
+    display.print((char)27);//left arrow symbol
+  } else if(600>joy_x && joy_x>400) {
+    display.print((char)26);//right arrow symbol
+  } else if(joy_y==0) {
+    display.print((char)24);//up arrow symbol
+    if (speed<100) speed++;
+  } else if (600>joy_y && joy_y>400) {
+    display.print((char)25);//down arrown symbol
+    if (speed>0) speed--;
+  } else if(btn==true){
+    display.print((char)7);//button press => circle symbol
+    current_page=0;
+  }
+  display.print("--settings page--");
+  display.setCursor(0, 10);
+  display.print("press button to start");
+}
+
+void main_page(int joy_x, int joy_y, bool btn){
   display.setCursor(0, 20);
   //split text into words
   String text = "Lorem ipsum dolor sitet amet, consectetur adipiscing elit.";
@@ -75,7 +106,6 @@ void loop() {
 
   if (joy_x==0){
     display.print((char)27);//left arrow symbol
-    
     if(highlighted_word>0) highlighted_word--; //go one word back
   } else if(600>joy_x && joy_x>400) {
     display.print((char)26);//right arrow symbol
@@ -94,7 +124,7 @@ void loop() {
 
   //tracks release of a button
   if (btn==false && lastbtnstate==true){
-    settings();
+    highlight? highlight=false:highlight=true;
   }
   lastbtnstate= btn;
 
@@ -110,20 +140,10 @@ void loop() {
   display.print(words[highlighted_word]);
   display.setTextColor(WHITE);
 
-  
-
   //print speed on the right bottom corner of the display
   display.setCursor(SCREEN_WIDTH-9*6, SCREEN_HEIGHT-10);
   display.print("speed:");
   char buffer[4];
   sprintf(buffer,"%3d", speed); //format speed to be aligned on the right of the screen
-  display.print(buffer);
-
-  // ── scrolling feature ────────────────────────────
-
-  
-  //update the display
-  
-  display.display();
-  delay(ms_delay);
+  display.print(buffer);  
 }
