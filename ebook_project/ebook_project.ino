@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <fonts/FreeMonoBold9pt7b.h>
+#include <fonts/FreeMono9pt7b.h>
 
 // ── Display ──────────────────────────────────────────
 #define SCREEN_WIDTH  128
