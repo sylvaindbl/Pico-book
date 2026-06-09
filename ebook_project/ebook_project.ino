@@ -68,7 +68,7 @@ void loop() {
 
   display.setFont(&FreeMonoBold12pt7b);
   display.setCursor(0, 20);
-  display.print("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet");
+  display.print("Lorem ipsum dolor sit amet, consetetur sadipscing elitr.");
 
   //print speed on the right bottom corner of the display
   display.setFont();
