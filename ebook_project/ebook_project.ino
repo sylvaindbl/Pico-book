@@ -90,7 +90,7 @@ void loop() {
     display.print(lines[i]);
     display.setCursor(0, y += 12);
   } */
-  sprintf("test");
+  display.print("test");
   //update the display
   display.display();
   delay(30);
