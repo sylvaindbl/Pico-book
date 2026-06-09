@@ -37,13 +37,18 @@ void setup() {
   display.display();
   delay(1000);
 }
-int speed=0;
+int speed=50;
 int highlighted_word=0;
+bool highlight;
+void settings(){
+  highlight? highlight=false:highlight=true;
+}
+
 void loop() {
   // ── Read joystick ───────────────────────────────────
   int joy_x   = analogRead(JOY_X);         // 0 - 1023
   int joy_y   = analogRead(JOY_Y);         // 0 - 1023
-  bool btn    = !digitalRead(JOY_BTN);     // true when pressed
+  bool btn    = !digitalRead(JOY_BTN);     // true when button is pressed
 
   // ── Draw ────────────────────────────────────────────
   display.clearDisplay();
@@ -69,9 +74,9 @@ void loop() {
   if (joy_x==0){
     display.print((char)27);//left arrow symbol
     if(highlighted_word>0) highlighted_word--; //go one word back
-  } else if(600>joy_x && joy_x>500) {
+  } else if(600>joy_x && joy_x>400) {
     display.print((char)26);//right arrow symbol
-    if(highlighted_word<word_count) highlighted_word++; //go to next word
+    if(highlighted_word<word_count-1) highlighted_word++; //go to next word until end of text
   } else if(joy_y==0) {
     display.print((char)24);//up arrow symbol
     if (speed<100) speed++;
@@ -80,6 +85,7 @@ void loop() {
     if (speed>0) speed--;
   } else if(btn==true){
     display.print((char)7);//button press => circle symbol
+    settings();
   }
   display.setCursor(10,0);
   display.print("--the pico book--");
@@ -88,8 +94,10 @@ void loop() {
   int16_t tx, ty;
   uint16_t tw, th;
   display.getTextBounds(words[highlighted_word], 0, 15, &tx, &ty, &tw, &th);
-  display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
-  display.setTextColor(BLACK);
+  if (highlight==true){
+    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
+    display.setTextColor(BLACK);
+  }
   display.setCursor(0, 15);
   display.print(words[highlighted_word]);
   display.setTextColor(WHITE);
