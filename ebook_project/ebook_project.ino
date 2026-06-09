@@ -33,13 +33,14 @@ void setup() {
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(1);
   display.setCursor(20, 28);
-  display.print("Ready to build!");
+  display.print("building!");
   display.display();
   delay(1000);
 }
 int speed=50;
 int highlighted_word=0;
 bool highlight;
+bool lastbtnstate=false;
 void settings(){
   highlight? highlight=false:highlight=true;
 }
@@ -70,9 +71,11 @@ void loop() {
 
   //indicate joysticks input
   display.setCursor(0, 0);
-  
+  int ms_delay = map(speed, 0, 100, 200, 30); //map the speed variable into delay (slower speed => higher delay in milliseconds)
+
   if (joy_x==0){
     display.print((char)27);//left arrow symbol
+    
     if(highlighted_word>0) highlighted_word--; //go one word back
   } else if(600>joy_x && joy_x>400) {
     display.print((char)26);//right arrow symbol
@@ -85,10 +88,15 @@ void loop() {
     if (speed>0) speed--;
   } else if(btn==true){
     display.print((char)7);//button press => circle symbol
-    settings();
   }
   display.setCursor(10,0);
   display.print("--the pico book--");
+
+  //tracks release of a button
+  if (btn==false && lastbtnstate==true){
+    settings();
+  }
+  lastbtnstate= btn;
 
   //highlight word
   int16_t tx, ty;
@@ -113,8 +121,9 @@ void loop() {
 
   // ── scrolling feature ────────────────────────────
 
-  int ms_delay = map(speed, 0, 100, 200, 30); //map the speed variable into delay (slower speed => higher delay in milliseconds)
+  
   //update the display
+  
   display.display();
   delay(ms_delay);
 }
