@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <fonts/FreeMonoBold12pt7b.h>
+#include <fonts/FreeMonoBold9pt7b.h>
 
 // ── Display ──────────────────────────────────────────
 #define SCREEN_WIDTH  128
@@ -83,14 +83,14 @@ void loop() {
     "Lorem ipsum", "dolor sit amet", "consetetur sadipcing", "elitr.",
   };
   int lineCount = 4;
-  display.setFont(&FreeMonoBold12pt7b);
+  display.setFont(&FreeMono9pt7b);
   y = 24;
   display.setCursor(0, y);
-  for (int i = 0; i < lineCount; i++) {
+  /* for (int i = 0; i < lineCount; i++) {
     display.print(lines[i]);
     display.setCursor(0, y += 12);
-  }
-
+  } */
+  sprintf("test");
   //update the display
   display.display();
   delay(30);
