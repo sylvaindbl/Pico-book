@@ -63,12 +63,10 @@ void loop() {
   } else if(btn==true){
     display.print((char)7);//button press => circle symbol
   }
+
+  //title
   display.setCursor(10,0);
   display.print("--the pico book--");
-
-  display.setFont(&FreeMonoBold12pt7b);
-  display.setCursor(0, 20);
-  display.print("Lorem ipsum dolor sit amet, consetetur sadipscing elitr.");
 
   //print speed on the right bottom corner of the display
   display.setFont();
@@ -78,8 +76,20 @@ void loop() {
   sprintf(buffer,"%3d", speed); //format speed to be aligned on the right of the screen
   display.print(buffer);
 
-  // ── scrolling feature ────────────────────────────
-
+  //printing the text
+  int y = 0; //y coordinate of the display
+  int x = 0; //x coordinate of the display
+  const char* lines[] = {
+    "Lorem ipsum", "dolor sit amet", "consetetur sadipcing", "elitr.",
+  };
+  int lineCount = 4;
+  display.setFont(&FreeMonoBold12pt7b);
+  y = 24;
+  display.setCursor(0, y);
+  for (int i = 0; i < lineCount; i++) {
+    display.print(lines[i]);
+    display.setCursor(0, y += 12);
+  }
 
   //update the display
   display.display();
