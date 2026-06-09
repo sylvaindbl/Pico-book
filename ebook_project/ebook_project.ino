@@ -38,6 +38,7 @@ void setup() {
   delay(1000);
 }
 int speed=0;
+int highlighted_word=0;
 void loop() {
   // ── Read joystick ───────────────────────────────────
   int joy_x   = analogRead(JOY_X);         // 0 - 1023
@@ -46,13 +47,31 @@ void loop() {
 
   // ── Draw ────────────────────────────────────────────
   display.clearDisplay();
+  display.setCursor(0, 20);
+  //split text into words
+  String text = "Lorem ipsum dolor sitet amet, consectetur adipiscing elit.";
+  String words[20];
+  int word_count = 0;
+
+  while (text.length() > 0) {
+      int spaceIndex = text.indexOf(' ');
+      if (spaceIndex == -1) {
+          words[word_count++] = text;    // last word
+          break;
+      }
+      words[word_count++] = text.substring(0, spaceIndex);
+      text = text.substring(spaceIndex + 1);
+  }
 
   //indicate joysticks input
   display.setCursor(0, 0);
+  
   if (joy_x==0){
     display.print((char)27);//left arrow symbol
+    if(highlighted_word>0) highlighted_word--; //go one word back
   } else if(600>joy_x && joy_x>500) {
     display.print((char)26);//right arrow symbol
+    if(highlighted_word<word_count) highlighted_word++; //go to next word
   } else if(joy_y==0) {
     display.print((char)24);//up arrow symbol
     if (speed<100) speed++;
@@ -65,8 +84,17 @@ void loop() {
   display.setCursor(10,0);
   display.print("--the pico book--");
 
-  display.setCursor(0, 20);
-  display.print("Lorem ipsum dolor sitet amet, consectetur adipiscing elit.");
+  //highlight word
+  int16_t tx, ty;
+  uint16_t tw, th;
+  display.getTextBounds(words[highlighted_word], 0, 15, &tx, &ty, &tw, &th);
+  display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
+  display.setTextColor(BLACK);
+  display.setCursor(0, 15);
+  display.print(words[highlighted_word]);
+  display.setTextColor(WHITE);
+
+  
 
   //print speed on the right bottom corner of the display
   display.setCursor(SCREEN_WIDTH-9*6, SCREEN_HEIGHT-10);
@@ -77,8 +105,8 @@ void loop() {
 
   // ── scrolling feature ────────────────────────────
 
-
+  int ms_delay = map(speed, 0, 100, 200, 30); //map the speed variable into delay (slower speed => higher delay in milliseconds)
   //update the display
   display.display();
-  delay(30);
+  delay(ms_delay);
 }
