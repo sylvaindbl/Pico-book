@@ -1,6 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <fonts/FreeMonoBold12pt7b.h>
 
 // ── Display ──────────────────────────────────────────
 #define SCREEN_WIDTH  128
@@ -65,10 +66,12 @@ void loop() {
   display.setCursor(10,0);
   display.print("--the pico book--");
 
+  display.setFont(&FreeMonoBold12pt7b);
   display.setCursor(0, 20);
-  display.print("Lorem ipsum dolor sitet amet, consectetur adipiscing elit.");
+  display.print("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet");
 
   //print speed on the right bottom corner of the display
+  display.setFont();
   display.setCursor(SCREEN_WIDTH-9*6, SCREEN_HEIGHT-10);
   display.print("speed:");
   char buffer[4];
