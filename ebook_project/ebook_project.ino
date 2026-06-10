@@ -84,7 +84,7 @@ void loop() {
 void settings_page(int joy_x, int joy_y, bool btn){
   static bool lastbtnstate=false;
 
-  if (joy_left){
+  /*   if (joy_left){
     
   } 
   if(joy_right) {
@@ -100,14 +100,13 @@ void settings_page(int joy_x, int joy_y, bool btn){
     
   } else {
     //joystick centered
-  }
+  } */
 
     //tracks release of a button
   if (btn==false && lastbtnstate==true){
     current_page=0;
   }
   lastbtnstate= btn;
-  display.setCursor(0, 0);
   display.print("--settings page--");
       
   display.setCursor(0, 20);
@@ -119,7 +118,7 @@ void settings_page(int joy_x, int joy_y, bool btn){
 void main_page(int joy_x, int joy_y, bool btn){
   static int highlighted_word=0;
   static bool lastbtnstate=false;
-  display.setCursor(0, 0);
+
   //split text into words
   String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. end...";
   String words[100];
