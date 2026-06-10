@@ -40,16 +40,37 @@ void setup() {
 
 
 bool highlight=false;
-
+bool joy_left, joy_right, joy_up, joy_down;
 int current_page=0;
+int speed=50;
 void loop() {
+
   // ── Read joystick ───────────────────────────────────
     int joy_x   = analogRead(JOY_X);         // 0 - 1023
     int joy_y   = analogRead(JOY_Y);         // 0 - 1023
     bool btn    = !digitalRead(JOY_BTN);     // true when button is pressed
-  // ── Draw ────────────────────────────────────────────
-  display.setCursor(5, 0);
+
   display.clearDisplay();
+  display.setCursor(0, 0);
+  joy_left=false, joy_right=false, joy_up=false, joy_down=false;
+  if (joy_x==0){
+    display.print((char)27);//left arrow symbol
+    joy_left=true;
+  } else if(600>joy_x && joy_x>400) {
+    display.print((char)26);//right arrow symbol
+    joy_right=true;
+  } else if(joy_y==0) {
+    display.print((char)24);//up arrow symbol
+    joy_up=true;
+    if (speed<100) speed++;
+  } else if (600>joy_y && joy_y>400) {
+    display.print((char)25);//down arrown symbol
+    joy_down=true;
+  } else if(btn==true){
+    display.print((char)7);//button press => circle symbol
+  } else {
+    display.print(' ');
+  }
   if (current_page==1){
     settings_page(joy_x, joy_y, btn);
   } else {
@@ -62,21 +83,23 @@ void loop() {
 
 void settings_page(int joy_x, int joy_y, bool btn){
   static bool lastbtnstate=false;
-  display.setCursor(0, 0);
 
-    if (joy_x==0){
-    display.print((char)27);//left arrow symbol
-  } else if(600>joy_x && joy_x>400) {
-    display.print((char)26);//right arrow symbol
-  } else if(joy_y==0) {
-    display.print((char)24);//up arrow symbol
-  } else if (600>joy_y && joy_y>400) {
-    display.print((char)25);//down arrown symbol
-    highlight? highlight=false:highlight=true;
-  } else if(btn==true){
-    display.print((char)7);//button press => circle symbol
+  if (joy_left){
+    
+  } 
+  if(joy_right) {
+    
+  } 
+  if(joy_up) {
+    
+  } 
+  if (joy_down) {
+    
+  } 
+  if(btn){//button pressed
+    
   } else {
-    display.print(' ');
+    //joystick centered
   }
 
     //tracks release of a button
@@ -84,6 +107,7 @@ void settings_page(int joy_x, int joy_y, bool btn){
     current_page=0;
   }
   lastbtnstate= btn;
+  display.setCursor(0, 0);
   display.print("--settings page--");
       
   display.setCursor(0, 20);
@@ -94,13 +118,13 @@ void settings_page(int joy_x, int joy_y, bool btn){
 
 void main_page(int joy_x, int joy_y, bool btn){
   static int highlighted_word=0;
-  static int speed=50;
   static bool lastbtnstate=false;
   display.setCursor(0, 0);
   //split text into words
   String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. end...";
   String words[100];
   int word_count = 0;
+
 
   while (text.length() > 0) {
       int spaceIndex = text.indexOf(' ');
@@ -112,22 +136,22 @@ void main_page(int joy_x, int joy_y, bool btn){
       text = text.substring(spaceIndex + 1);
   }
 
-  if (joy_x==0){
-      display.print((char)27);//left arrow symbol
-  if(highlighted_word>0) highlighted_word--; //go one word back
-  } else if(600>joy_x && joy_x>400) {
-    display.print((char)26);//right arrow symbol
-  if(highlighted_word<word_count-1) highlighted_word++; //go to next word until end of text
-  } else if(joy_y==0) {
-    display.print((char)24);//up arrow symbol
-  if (speed<100) speed++;
-  } else if (600>joy_y && joy_y>400) {
-    display.print((char)25);//down arrown symbol
-  if (speed>0) speed--;
-  } else if(btn==true){
-    display.print((char)7);//button press => circle symbol
+  if (joy_left){
+    if(highlighted_word>0) highlighted_word--; //go one word back
+  } 
+  if(joy_right) {
+    if(highlighted_word<word_count-1) highlighted_word++; //go to next word until end of text
+  } 
+  if(joy_up) {
+    if (speed<100) speed++;
+  } 
+  if (joy_down) {
+    if (speed>0) speed--;
+  } 
+  if(btn){
+    //button pressed
   } else {
-    display.print(' ');
+    //joystick centered
   }
   display.print("--the pico book--");
 
