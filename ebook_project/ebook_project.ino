@@ -33,14 +33,14 @@ void setup() {
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(1);
   display.setCursor(20, 28);
-  display.print("building...");
+  display.print("building.");
   display.display();
   delay(1000);
 }
-int speed=50;
-int highlighted_word=0;
-bool highlight;
-bool lastbtnstate=false;
+
+
+bool highlight=false;
+
 int current_page=0;
 void loop() {
   // ── Read joystick ───────────────────────────────────
@@ -57,11 +57,11 @@ void loop() {
   } 
     //update the display
   display.display();
-  delay(200);
+  delay(10);
 }
 
 void settings_page(int joy_x, int joy_y, bool btn){
-  
+  static bool lastbtnstate=false;
   display.setCursor(0, 0);
 
     if (joy_x==0){
@@ -70,24 +70,36 @@ void settings_page(int joy_x, int joy_y, bool btn){
     display.print((char)26);//right arrow symbol
   } else if(joy_y==0) {
     display.print((char)24);//up arrow symbol
-    if (speed<100) speed++;
   } else if (600>joy_y && joy_y>400) {
     display.print((char)25);//down arrown symbol
-    if (speed>0) speed--;
+    highlight? highlight=false:highlight=true;
   } else if(btn==true){
     display.print((char)7);//button press => circle symbol
+  } else {
+    display.print(' ');
+  }
+
+    //tracks release of a button
+  if (btn==false && lastbtnstate==true){
     current_page=0;
   }
+  lastbtnstate= btn;
   display.print("--settings page--");
-  display.setCursor(0, 10);
-  display.print("press button to start");
+      
+  display.setCursor(0, 20);
+  display.print("highlight word: ");highlight? display.print("true\n"):display.print("false\n");
+  display.setCursor(0, 50);
+  display.print("press button to save"); 
 }
 
 void main_page(int joy_x, int joy_y, bool btn){
-  display.setCursor(0, 20);
+  static int highlighted_word=0;
+  static int speed=50;
+  static bool lastbtnstate=false;
+  display.setCursor(0, 0);
   //split text into words
-  String text = "Lorem ipsum dolor sitet amet, consectetur adipiscing elit.";
-  String words[20];
+  String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. end...";
+  String words[100];
   int word_count = 0;
 
   while (text.length() > 0) {
@@ -100,31 +112,36 @@ void main_page(int joy_x, int joy_y, bool btn){
       text = text.substring(spaceIndex + 1);
   }
 
+  if (joy_x==0){
+      display.print((char)27);//left arrow symbol
+  if(highlighted_word>0) highlighted_word--; //go one word back
+  } else if(600>joy_x && joy_x>400) {
+    display.print((char)26);//right arrow symbol
+  if(highlighted_word<word_count-1) highlighted_word++; //go to next word until end of text
+  } else if(joy_y==0) {
+    display.print((char)24);//up arrow symbol
+  if (speed<100) speed++;
+  } else if (600>joy_y && joy_y>400) {
+    display.print((char)25);//down arrown symbol
+  if (speed>0) speed--;
+  } else if(btn==true){
+    display.print((char)7);//button press => circle symbol
+  } else {
+    display.print(' ');
+  }
+  display.print("--the pico book--");
+
+
+
   //indicate joysticks input
   display.setCursor(0, 0);
   int ms_delay = map(speed, 0, 100, 200, 30); //map the speed variable into delay (slower speed => higher delay in milliseconds)
 
-  if (joy_x==0){
-    display.print((char)27);//left arrow symbol
-    if(highlighted_word>0) highlighted_word--; //go one word back
-  } else if(600>joy_x && joy_x>400) {
-    display.print((char)26);//right arrow symbol
-    if(highlighted_word<word_count-1) highlighted_word++; //go to next word until end of text
-  } else if(joy_y==0) {
-    display.print((char)24);//up arrow symbol
-    if (speed<100) speed++;
-  } else if (600>joy_y && joy_y>400) {
-    display.print((char)25);//down arrown symbol
-    if (speed>0) speed--;
-  } else if(btn==true){
-    display.print((char)7);//button press => circle symbol
-  }
-  display.setCursor(10,0);
-  display.print("--the pico book--");
+
 
   //tracks release of a button
   if (btn==false && lastbtnstate==true){
-    highlight? highlight=false:highlight=true;
+    current_page=1;
   }
   lastbtnstate= btn;
 
