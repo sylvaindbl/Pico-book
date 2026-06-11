@@ -38,28 +38,32 @@ void setup() {
   delay(1000);
 }
 
-
+//global variables
 bool highlight=false;
 bool joy_left, joy_right, joy_up, joy_down;
 int current_page=0;
 int speed=50;
+int interval;
+bool btn;
+
+//function runned every frame
 void loop() {
 
   // ── Read joystick ───────────────────────────────────
     int joy_x   = analogRead(JOY_X);         // 0 - 1023
     int joy_y   = analogRead(JOY_Y);         // 0 - 1023
-    bool btn    = !digitalRead(JOY_BTN);     // true when button is pressed
+    btn    = !digitalRead(JOY_BTN);     // true when button is pressed
 
   display.clearDisplay();
   display.setCursor(0, 0);
   joy_left=false, joy_right=false, joy_up=false, joy_down=false;
-  if (joy_x==0){
+  if (joy_x<100){
     display.print((char)27);//left arrow symbol
     joy_left=true;
   } else if(600>joy_x && joy_x>400) {
     display.print((char)26);//right arrow symbol
     joy_right=true;
-  } else if(joy_y==0) {
+  } else if(joy_y<100) {
     display.print((char)24);//up arrow symbol
     joy_up=true;
     if (speed<100) speed++;
@@ -72,17 +76,27 @@ void loop() {
     display.print(' ');
   }
   if (current_page==1){
-    settings_page(joy_x, joy_y, btn);
+    settings_page();
   } else {
-    main_page(joy_x, joy_y, btn);
+    main_page();
   } 
     //update the display
   display.display();
   delay(10);
 }
 
-void settings_page(int joy_x, int joy_y, bool btn){
+void settings_page(){
   static bool lastbtnstate=false;
+  static uint32_t last_joy_left;
+  static uint32_t last_joy_right;
+  if (joy_left && !last_joy_left){//joystick was just moved to the left
+    highlight? highlight= false: highlight=true;
+  } 
+  last_joy_left = joy_left;
+   if (joy_right && !last_joy_right){//joystick was just moved to the left
+    highlight? highlight= false: highlight=true;
+  } 
+  last_joy_right = joy_right;
 
   /*   if (joy_left){
     
@@ -115,9 +129,12 @@ void settings_page(int joy_x, int joy_y, bool btn){
   display.print("press button to save"); 
 }
 
-void main_page(int joy_x, int joy_y, bool btn){
-  static int highlighted_word=0;
+void main_page(){
+
+  uint32_t now = millis(); //current time in milliseconds
+  static int current_word=0;
   static bool lastbtnstate=false;
+  static uint32_t last_time=0;
 
   //split text into words
   String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. end...";
@@ -135,11 +152,21 @@ void main_page(int joy_x, int joy_y, bool btn){
       text = text.substring(spaceIndex + 1);
   }
 
-  if (joy_left){
-    if(highlighted_word>0) highlighted_word--; //go one word back
-  } 
+  if(joy_left) {
+    if (millis()- last_time >= interval) { //joystick is on the left for more than the intterval
+      last_time = millis();
+      if(current_word>0) current_word--;//go to next word until end of text
+    }
+  }
   if(joy_right) {
-    if(highlighted_word<word_count-1) highlighted_word++; //go to next word until end of text
+    static int i;
+    if (millis()- last_time >= interval) { //joystick is on the left for more than the interval
+      Serial.println("right");
+      Serial.println(i);
+      i++;
+      last_time = millis();
+      if(current_word<word_count-1) current_word++;//go to next word until end of text
+    }
   } 
   if(joy_up) {
     if (speed<100) speed++;
@@ -158,7 +185,7 @@ void main_page(int joy_x, int joy_y, bool btn){
 
   //indicate joysticks input
   display.setCursor(0, 0);
-  int ms_delay = map(speed, 0, 100, 200, 30); //map the speed variable into delay (slower speed => higher delay in milliseconds)
+  interval = map(speed, 0, 100, 500, 100); //map the speed variable into delay (slower speed => higher delay in milliseconds)
 
 
 
@@ -171,13 +198,13 @@ void main_page(int joy_x, int joy_y, bool btn){
   //highlight word
   int16_t tx, ty;
   uint16_t tw, th;
-  display.getTextBounds(words[highlighted_word], 0, 15, &tx, &ty, &tw, &th);
+  display.getTextBounds(words[current_word], 0, 15, &tx, &ty, &tw, &th);
   if (highlight==true){
     display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
     display.setTextColor(BLACK);
   }
   display.setCursor(0, 15);
-  display.print(words[highlighted_word]);
+  display.print(words[current_word]);
   display.setTextColor(WHITE);
 
   //print speed on the right bottom corner of the display
