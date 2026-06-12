@@ -94,6 +94,11 @@ void loop() {
   } else {
     main_page();
   } 
+  if (dark_mode==false){
+    display.invertDisplay(true);
+  } else {
+    display.invertDisplay(false);
+  }
     //update the display
   display.display();
   delay(50);
