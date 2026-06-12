@@ -46,6 +46,17 @@ int speed=50;
 int interval;
 bool btn;
 
+void highlight_word(String word){
+  //highlight word
+  int16_t tx, ty;
+  uint16_t tw, th;
+  display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);
+  display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
+  display.setTextColor(BLACK);
+  display.setCursor(0, 15);
+  display.print(word);
+  display.setTextColor(WHITE);
+}
 //function runned every frame
 void loop() {
 
@@ -90,7 +101,7 @@ void settings_page(){
   static uint32_t last_joy_left;
   static uint32_t last_joy_right;
   if (joy_left && !last_joy_left){//joystick was just moved to the left
-    highlight? highlight= false: highlight=true;
+    //highlight? highlight= false: highlight=true;
   } 
   last_joy_left = joy_left;
    if (joy_right && !last_joy_right){//joystick was just moved to the left
@@ -181,7 +192,13 @@ void main_page(){
   }
   display.print("--the pico book--");
 
-
+  if (highlight) {
+    highlight_word(words[current_word]);
+  } else {
+    display.setCursor(0, 15);
+    display.print(words[current_word]);
+  }
+  
 
   //indicate joysticks input
   display.setCursor(0, 0);
@@ -195,17 +212,7 @@ void main_page(){
   }
   lastbtnstate= btn;
 
-  //highlight word
-  int16_t tx, ty;
-  uint16_t tw, th;
-  display.getTextBounds(words[current_word], 0, 15, &tx, &ty, &tw, &th);
-  if (highlight==true){
-    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
-    display.setTextColor(BLACK);
-  }
-  display.setCursor(0, 15);
-  display.print(words[current_word]);
-  display.setTextColor(WHITE);
+  
 
   //print speed on the right bottom corner of the display
   display.setCursor(SCREEN_WIDTH-9*6, SCREEN_HEIGHT-10);
