@@ -9,6 +9,7 @@
 #define OLED_RESET    -1
 #define OLED_ADDRESS  0x3C
 #define CHARACTER_WIDTH 5
+#define MAX_SETTINGS 3
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
@@ -40,23 +41,24 @@ void setup() {
 }
 
 //global variables
-bool highlight=false;
+
 bool joy_left, joy_right, joy_up, joy_down;
 int current_page=0;
 int speed=50;
 int interval;
 bool btn;
+int font_selected=1;
+int dark_mode=1;
+int highlight=0;
 
 void highlight_word(String word){
-  //highlight word
   int16_t tx, ty;
   uint16_t tw, th;
-  display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);
-  display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
+  display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
+  display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE); //add white rectangle behind it
   display.setTextColor(BLACK);
-  display.setCursor(0, 15);
-  display.print(word);
-  display.setTextColor(WHITE);
+  display.print(word); //print the text
+  display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
 }
 //function runned every frame
 void loop() {
@@ -94,27 +96,62 @@ void loop() {
   } 
     //update the display
   display.display();
-  delay(10);
+  delay(50);
 }
 
 void settings_page(){
   static bool lastbtnstate=false;
   static uint32_t last_joy_left;
   static uint32_t last_joy_right;
+  static int current_setting=0;
+  
+  struct MenuItem {
+  String label;
+  int* value;        // pointer to the setting value so that it changes it directly
+  int minVal;
+  int maxVal;
+  };
+
+  MenuItem menu[] = {
+    { "highlight word", &highlight, 0, 1},
+    { "dark mode", &dark_mode, 0, 1},
+    { "font", &font_selected, 0, 1},
+  };
+  display.print("--settings page--");
+      
+  display.setCursor(0, 20);
+
+  for (int i=0; i<MAX_SETTINGS; i++){
+    if (i==current_setting){
+      display.print('>'); //to show which one is selected
+    }else {
+      display.print(' ');
+    }
+    display.print(menu[i].label);
+    for (int d=0; d<18-menu[i].label.length(); d++) display.print('.'); //print dots until value
+    display.print(' ');
+    display.print(*menu[i].value);
+    display.print('\n');
+  }
+
   if (joy_left && !last_joy_left){//joystick was just moved to the left
     //highlight? highlight= false: highlight=true;
   } 
   last_joy_left = joy_left;
-   if (joy_right && !last_joy_right){//joystick was just moved to the left
-    highlight? highlight= false: highlight=true;
+  if (joy_right && !last_joy_right){//joystick was just moved to the right
+    if (*menu[current_setting].value>=menu[current_setting].maxVal){
+      *menu[current_setting].value=0;
+    } else {
+      *menu[current_setting].value=*menu[current_setting].value+1;
+    } 
   } 
   last_joy_right = joy_right;
 
   if(joy_up) {
-    
+    if (current_setting>0) {current_setting--;}
   } 
   if (joy_down) {
-    
+    if (current_setting<MAX_SETTINGS-1) {current_setting++;}
   } 
   if(btn){//button pressed
     
@@ -127,10 +164,8 @@ void settings_page(){
     current_page=0;
   }
   lastbtnstate= btn;
-  display.print("--settings page--");
-      
-  display.setCursor(0, 20);
-  display.print("highlight word: ");highlight? display.print("true\n"):display.print("false\n");
+
+  
   display.setCursor(0, 50);
   display.print("press button to save"); 
 }
@@ -166,7 +201,7 @@ void main_page(){
   }
   if(joy_right) {
     static int i;
-    if (millis()- last_time >= interval) { //joystick is on the left for more than the interval
+    if (millis()- last_time >= interval) { //joystick is on the right for more than the interval
       Serial.println("right");
       Serial.println(i);
       i++;
@@ -187,13 +222,14 @@ void main_page(){
   }
   display.print("--the pico book--");
 
-  if(font=1){
+  display.setCursor(0, 15);
+  if(font_selected==1){
+    display.setCursor(0, 25);
     display.setFont(&FreeMono9pt7b);
   }
   if (highlight) {
     highlight_word(words[current_word]);
   } else {
-    display.setCursor(0, 15);
     display.print(words[current_word]);
   }
   display.setFont(0);
