@@ -109,6 +109,7 @@ void settings_page(){
   static uint32_t last_joy_left;
   static uint32_t last_joy_right;
   static int current_setting=0;
+  static long last_time=0;
   
   struct MenuItem {
   String label;
@@ -153,10 +154,16 @@ void settings_page(){
   last_joy_right = joy_right;
 
   if(joy_up) {
-    if (current_setting>0) {current_setting--;}
+    if (millis()- last_time >= 300) {
+      if (current_setting>0) {current_setting--;}
+      last_time = millis();
+    }
   } 
   if (joy_down) {
-    if (current_setting<MAX_SETTINGS-1) {current_setting++;}
+    if (millis()- last_time >= 300) {
+      if (current_setting<MAX_SETTINGS-1) {current_setting++;}
+      last_time = millis();
+    }
   } 
   if(btn){//button pressed
     
