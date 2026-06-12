@@ -1,6 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <fonts/FreeMono9pt7b.h>
 
 // ── Display ──────────────────────────────────────────
 #define SCREEN_WIDTH  128
@@ -109,12 +110,6 @@ void settings_page(){
   } 
   last_joy_right = joy_right;
 
-  /*   if (joy_left){
-    
-  } 
-  if(joy_right) {
-    
-  } 
   if(joy_up) {
     
   } 
@@ -125,7 +120,7 @@ void settings_page(){
     
   } else {
     //joystick centered
-  } */
+  }
 
     //tracks release of a button
   if (btn==false && lastbtnstate==true){
@@ -192,13 +187,16 @@ void main_page(){
   }
   display.print("--the pico book--");
 
+  if(font=1){
+    display.setFont(&FreeMono9pt7b);
+  }
   if (highlight) {
     highlight_word(words[current_word]);
   } else {
     display.setCursor(0, 15);
     display.print(words[current_word]);
   }
-  
+  display.setFont(0);
 
   //indicate joysticks input
   display.setCursor(0, 0);
