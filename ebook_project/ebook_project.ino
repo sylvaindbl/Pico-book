@@ -55,14 +55,18 @@ void highlight_word(String word){
   int16_t tx, ty;
   uint16_t tw, th;
   display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
-  display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE); //add white rectangle behind it
+  if (font_selected==1) {
+    display.fillRect(tx - 2, ty + 13, tw + 4, th + 4, WHITE);
+  } else {
+    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
+  }
+    //add white rectangle behind it
   display.setTextColor(BLACK);
   display.print(word); //print the text
   display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
 }
 //function runned every frame
 void loop() {
-
   // ── Read joystick ───────────────────────────────────
     int joy_x   = analogRead(JOY_X);         // 0 - 1023
     int joy_y   = analogRead(JOY_Y);         // 0 - 1023
@@ -248,7 +252,7 @@ void main_page(){
 
   //indicate joysticks input
   display.setCursor(0, 0);
-  interval = map(speed, 0, 100, 500, 100); //map the speed variable into delay (slower speed => higher delay in milliseconds)
+  interval = map(speed, 0, 100, 500, 70); //map the speed variable into delay (slower speed => higher delay in milliseconds)
 
 
 
