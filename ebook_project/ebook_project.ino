@@ -296,12 +296,6 @@ void main_page(){
   display.setCursor(0, 0);
   interval = map(speed, 0, 100, 500, 70); //map the speed variable into delay (slower speed => higher delay in milliseconds)
 
-  
-
- 
-
-  
-
   //print speed on the right bottom corner of the display
   display.setCursor(SCREEN_WIDTH-9*6, SCREEN_HEIGHT-10);
   display.print("speed:");
