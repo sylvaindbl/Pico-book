@@ -2,6 +2,9 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <fonts/FreeMono9pt7b.h>
+#include <Adafruit_LittleFS.h>
+#include <InternalFileSystem.h>
+using namespace Adafruit_LittleFS_Namespace;
 
 // ── Display ──────────────────────────────────────────
 #define SCREEN_WIDTH  128
@@ -26,8 +29,34 @@ struct SavedData {
   int current_page;
 } data;
 
+File file(InternalFS);
+
+void saveData() {
+  InternalFS.remove("data.bin");
+  file.open("data.bin", FILE_O_WRITE);
+  if (file) {
+    file.write((uint8_t*)&data, sizeof(data));  // save struct as bytes
+    file.close();
+  }
+}
+
 void setup() {
   Serial.begin(115200);
+  InternalFS.begin();
+
+  file.open("data.bin", FILE_O_READ);
+  if (file) {
+    // file exists — load it
+    file.read((uint8_t*)&data, sizeof(data));
+    file.close();
+    data.current_page = 0;
+  } else {
+    // first boot — set defaults
+    data.font_selected = 1;
+    data.dark_mode = 1;
+    data.highlight = 0;
+    saveData();
+  }
 
   // address 0, reads into variable
 
@@ -64,7 +93,7 @@ void highlight_word(String word){
   uint16_t tw, th;
   display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
   if (data.font_selected==1) {
-    display.fillRect(tx - 2, ty + 13, tw + 4, th + 4, WHITE);
+    display.fillRect(tx - 2, ty + 13, tw + 4, th + 4, WHITE);//change the box location if font 1 is selected
   } else {
     display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
   }
@@ -162,7 +191,8 @@ void settings_page(){
       *menu[current_setting].value=0;
     } else {
       *menu[current_setting].value=*menu[current_setting].value+1;
-    } 
+    }
+    saveData();
   } 
   last_joy_right = joy_right;
 
