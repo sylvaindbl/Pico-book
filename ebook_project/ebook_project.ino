@@ -2,6 +2,11 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <fonts/FreeMono9pt7b.h>
+#include <Adafruit_LittleFS.h>
+#include <InternalFileSystem.h>
+#include <avr/pgmspace.h>
+#include "book.h"
+using namespace Adafruit_LittleFS_Namespace;
 
 // ── Display ──────────────────────────────────────────
 #define SCREEN_WIDTH  128
@@ -18,6 +23,29 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define JOY_Y   A1
 #define JOY_BTN 2
 
+struct SavedData {
+  int font_selected;
+  int dark_mode;
+  int highlight;
+  int current_word;
+  int current_page;
+} data;
+
+File file(InternalFS);
+
+void saveData() {
+  InternalFS.remove("data.bin");
+  file.open("data.bin", FILE_O_WRITE);
+  if (file) {
+    file.write((uint8_t*)&data, sizeof(data));  // save struct as bytes
+    file.close();
+  }
+}
+
+void loadBook(char* page){
+  for (int i=0; i<1000; i++) page[i]= pgm_read_byte(&BOOK[0 + i]);
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -29,7 +57,7 @@ void setup() {
     Serial.println("Display not found — check wiring!");
     while (true);
   }
-
+  
   // Startup screen
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
@@ -188,9 +216,18 @@ void main_page(){
   static int current_word=0;
   static bool lastbtnstate=false;
   static uint32_t last_time=0;
+  static int current_page_number=0;
 
   //split text into words
-  String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. end...";
+
+  static char page[1000];
+  loadBook(&page[1000]);
+  static String text = String(page);
+  if(current_page_number==0){
+    
+    current_page_number++;
+  }
+  
   String words[100];
   int word_count = 0;
 
