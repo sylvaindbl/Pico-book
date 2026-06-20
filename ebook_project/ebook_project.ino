@@ -208,7 +208,22 @@ void settings_page(){
   display.print("press button to save"); 
 }
 int word_length=0;
-
+int getPreviousWordLength(unsigned long pos) {
+  //skip back over the separator before that
+  while (pos > 0) {
+    char c = pgm_read_byte(&BOOK[pos - 1]);
+    if (c != ' ' && c != '\n' && c != '\r') break;
+    pos--;
+  }
+  //skip back over the previous word to find where it starts
+  int character_count=0;
+  while (pos > 0) {
+    char c = pgm_read_byte(&BOOK[pos - 1]);
+    if (c == ' ' || c == '\n' || c == '\r') break;
+    pos--; character_count++;
+  }
+  return ++character_count;
+}
 String getWord(unsigned long pos) {
   String word = "";
 
@@ -226,6 +241,7 @@ String getWord(unsigned long pos) {
     word += c;
     pos++; word_length++;
   }
+  word_length++;
 
   return word;
 }
@@ -235,7 +251,7 @@ void main_page(){
   static int current_word=0;
   static bool lastbtnstate=false;
   static uint32_t last_time=0;
-  static uint32_t current_character=0;
+  static int32_t current_character=0;
 
   int word_count = 100;
 
@@ -244,7 +260,10 @@ void main_page(){
       last_time = millis();
       if(current_word>0) {
         current_word--;//go to next word until end of text
-        current_character -= word_length;
+        current_character -= getPreviousWordLength(current_character);
+      } else if (current_character<=0){
+        current_character = 0;
+
       }
     }
   }
@@ -255,7 +274,7 @@ void main_page(){
       last_time = millis();
       if(current_word<word_count-1) {
         current_word++; 
-        current_character += word_length+1;
+        current_character += word_length;
         }//go to next word until end of text
     }
   } 
@@ -271,6 +290,7 @@ void main_page(){
     //joystick centered
   }
   display.print("--the pico book--");
+  display.print(word_length);
 
   display.setCursor(0, 15);
   if(font_selected==1){
@@ -282,8 +302,10 @@ void main_page(){
   } else {
     display.print(getWord(current_character));
   }
-  last_word_length = word_length;
   display.setFont(0);
+  display.print(word_length);
+  display.setCursor(0, SCREEN_HEIGHT-10);
+  display.print(current_character);
 
   //indicate joysticks input
   display.setCursor(0, 0);
