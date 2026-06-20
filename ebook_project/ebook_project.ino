@@ -208,38 +208,38 @@ void settings_page(){
   display.print("press button to save"); 
 }
 int word_length=0;
-int getPreviousWordLength(unsigned long pos) {
-  //skip back over the separator before that
-  while (pos > 0) {
-    char c = pgm_read_byte(&BOOK[pos - 1]);
+int getPreviousWordLength(unsigned long character_index) {
+  //skip back over the separator before the previous word
+  while (character_index > 0) {
+    char c = pgm_read_byte(&BOOK[character_index - 1]);
     if (c != ' ' && c != '\n' && c != '\r') break;
-    pos--;
+    character_index--;
   }
-  //skip back over the previous word to find where it starts
+  //skip back over the previous word
   int character_count=0;
   while (pos > 0) {
-    char c = pgm_read_byte(&BOOK[pos - 1]);
+    char c = pgm_read_byte(&BOOK[character_index - 1]);
     if (c == ' ' || c == '\n' || c == '\r') break;
-    pos--; character_count++;
+    character_index--; character_count++;
   }
   return ++character_count;
 }
-String getWord(unsigned long pos) {
+String getWord(unsigned long character_index) {
   String word = "";
 
   // skip leading spaces/newlines
-  while (pos < BOOK_SIZE) {
-    char c = pgm_read_byte(&BOOK[pos]);
+  while (character_index < BOOK_SIZE) {
+    char c = pgm_read_byte(&BOOK[character_index]);
     if (c != ' ' && c != '\n' && c != '\r') break;
-    pos++;
+    character_index++;
   }
   word_length=0;
   // read characters until next space/newline
-  while (pos < BOOK_SIZE) {
-    char c = pgm_read_byte(&BOOK[pos]);
+  while (character_index < BOOK_SIZE) {
+    char c = pgm_read_byte(&BOOK[character_index]);
     if (c == ' ' || c == '\n' || c == '\r') break;
     word += c;
-    pos++; word_length++;
+    character_index++; word_length++;
   }
   word_length++;
 
@@ -253,18 +253,13 @@ void main_page(){
   static uint32_t last_time=0;
   static int32_t current_character=0;
 
-  int word_count = 100;
-
   if(joy_left) {
     if (millis()- last_time >= interval) { //joystick is on the left for more than the interval
       last_time = millis();
-      if(current_word>0) {
-        current_word--;//go to next word until end of text
-        current_character -= getPreviousWordLength(current_character);
-      } else if (current_character<=0){
-        current_character = 0;
-
-      }
+      if(current_character >= 0) {
+        current_word--;//update counter
+        current_character -= getPreviousWordLength(current_character);//go to the character index of the previous word
+      } 
     }
   }
   if(joy_right) {
@@ -272,8 +267,8 @@ void main_page(){
     if (millis()- last_time >= interval) { //joystick is on the right for more than the interval
       i++;
       last_time = millis();
-      if(current_word<word_count-1) {
-        current_word++; 
+      if(current_character<BOOK_SIZE) {
+        current_word++;//update word counter
         current_character += word_length;
         }//go to next word until end of text
     }
@@ -290,7 +285,6 @@ void main_page(){
     //joystick centered
   }
   display.print("--the pico book--");
-  display.print(word_length);
 
   display.setCursor(0, 15);
   if(font_selected==1){
@@ -303,7 +297,7 @@ void main_page(){
     display.print(getWord(current_character));
   }
   display.setFont(0);
-  display.print(word_length);
+
   display.setCursor(0, SCREEN_HEIGHT-10);
   display.print(current_character);
 
