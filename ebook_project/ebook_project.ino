@@ -217,7 +217,7 @@ int getPreviousWordLength(unsigned long character_index) {
   }
   //skip back over the previous word
   int character_count=0;
-  while (pos > 0) {
+  while (character_index > 0) {
     char c = pgm_read_byte(&BOOK[character_index - 1]);
     if (c == ' ' || c == '\n' || c == '\r') break;
     character_index--; character_count++;
@@ -259,7 +259,9 @@ void main_page(){
       if(current_character >= 0) {
         current_word--;//update counter
         current_character -= getPreviousWordLength(current_character);//go to the character index of the previous word
-      } 
+      } else {
+        current_character=0;
+      }
     }
   }
   if(joy_right) {
@@ -298,8 +300,11 @@ void main_page(){
   }
   display.setFont(0);
 
+  //display progression: current character over total
   display.setCursor(0, SCREEN_HEIGHT-10);
   display.print(current_character);
+  display.print("/");
+  display.print(BOOK_SIZE);
 
   //indicate joysticks input
   display.setCursor(0, 0);
