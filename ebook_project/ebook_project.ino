@@ -24,11 +24,12 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define JOY_BTN 2
 
 struct SavedData {
-  int font_selected;
-  int dark_mode;
-  int highlight;
-  int current_word;
-  int current_page;
+  int font_selected = 0;
+  int dark_mode = 1;
+  int highlight = 0;
+  int current_word = 0;
+  int current_page = 0;
+  int32_t current_character = 0;
 } data;
 
 File file(InternalFS);
@@ -53,10 +54,6 @@ void setup() {
     file.close();
     data.current_page = 0;
   } else {
-    // first boot — set defaults
-    data.font_selected = 1;
-    data.dark_mode = 1;
-    data.highlight = 0;
     saveData();
   }
 
@@ -270,16 +267,15 @@ void main_page(){
   uint32_t now = millis(); //current time in milliseconds
   static bool lastbtnstate=false;
   static uint32_t last_time=0;
-  static int32_t current_character=0;
 
   if(joy_left) {
     if (millis()- last_time >= interval) { //joystick is on the left for more than the interval
       last_time = millis();
-      if(current_character >= 0) {
-        current_word--;//update counter
-        current_character -= getPreviousWordLength(current_character);//go to the character index of the previous word
+      if(data.current_character >= 0) {
+        data.current_word--;//update counter
+        data.current_character -= getPreviousWordLength(data.current_character);//go to the character index of the previous word
       } else {
-        current_character=0;
+        data.current_character=0;
       }
     }
   }
@@ -288,9 +284,9 @@ void main_page(){
     if (millis()- last_time >= interval) { //joystick is on the right for more than the interval
       i++;
       last_time = millis();
-      if(current_character<BOOK_SIZE) {
-        current_word++;//update word counter
-        current_character += word_length;
+      if(data.current_character<BOOK_SIZE) {
+        data.current_word++;//update word counter
+        data.current_character += word_length;
         }//go to next word until end of text
     }
   } 
@@ -311,21 +307,21 @@ void main_page(){
   lastbtnstate= btn;
   display.print("--the pico book--");
 
-  display.setCursor(0, 15);
+  display.setCursor(1, 15);
   if(data.font_selected==1){
     display.setCursor(0, 25);
     display.setFont(&FreeMono9pt7b);
   }
-  if (highlight) {
-    highlight_word(getWord(current_character));
+  if (data.highlight) {
+    highlight_word(getWord(data.current_character));
   } else {
-    display.print(getWord(current_character));
+    display.print(getWord(data.current_character));
   }
   display.setFont(0);
 
   //display progression: current character over total
   display.setCursor(0, SCREEN_HEIGHT-10);
-  display.print(current_character);
+  display.print(data.current_character);
   display.print("/");
   display.print(BOOK_SIZE);
 
