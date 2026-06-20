@@ -42,12 +42,9 @@ void saveData() {
   }
 }
 
-void loadBook(char* page){
-  for (int i=0; i<1000; i++) page[i]= pgm_read_byte(&BOOK[0 + i]);
-}
-
 void setup() {
   Serial.begin(115200);
+   Serial.println("Setup starting");
 
   // Joystick button
   pinMode(JOY_BTN, INPUT_PULLUP);
@@ -66,6 +63,7 @@ void setup() {
   display.print("building.");
   display.display();
   delay(1000);
+  Serial.println("Setup complete");
 }
 
 //global variables
@@ -209,53 +207,56 @@ void settings_page(){
   display.setCursor(0, 50);
   display.print("press button to save"); 
 }
+int word_length=0;
 
+String getWord(unsigned long pos) {
+  String word = "";
+
+  // skip leading spaces/newlines
+  while (pos < BOOK_SIZE) {
+    char c = pgm_read_byte(&BOOK[pos]);
+    if (c != ' ' && c != '\n' && c != '\r') break;
+    pos++;
+  }
+  word_length=0;
+  // read characters until next space/newline
+  while (pos < BOOK_SIZE) {
+    char c = pgm_read_byte(&BOOK[pos]);
+    if (c == ' ' || c == '\n' || c == '\r') break;
+    word += c;
+    pos++; word_length++;
+  }
+
+  return word;
+}
 void main_page(){
 
   uint32_t now = millis(); //current time in milliseconds
   static int current_word=0;
   static bool lastbtnstate=false;
   static uint32_t last_time=0;
-  static int current_page_number=0;
+  static uint32_t current_character=0;
 
-  //split text into words
-
-  static char page[1000];
-  loadBook(&page[1000]);
-  static String text = String(page);
-  if(current_page_number==0){
-    
-    current_page_number++;
-  }
-  
-  String words[100];
-  int word_count = 0;
-
-
-  while (text.length() > 0) {
-      int spaceIndex = text.indexOf(' ');
-      if (spaceIndex == -1) {
-          words[word_count++] = text;    // last word
-          break;
-      }
-      words[word_count++] = text.substring(0, spaceIndex);
-      text = text.substring(spaceIndex + 1);
-  }
+  int word_count = 100;
 
   if(joy_left) {
-    if (millis()- last_time >= interval) { //joystick is on the left for more than the intterval
+    if (millis()- last_time >= interval) { //joystick is on the left for more than the interval
       last_time = millis();
-      if(current_word>0) current_word--;//go to next word until end of text
+      if(current_word>0) {
+        current_word--;//go to next word until end of text
+        current_character -= word_length;
+      }
     }
   }
   if(joy_right) {
     static int i;
     if (millis()- last_time >= interval) { //joystick is on the right for more than the interval
-      Serial.println("right");
-      Serial.println(i);
       i++;
       last_time = millis();
-      if(current_word<word_count-1) current_word++;//go to next word until end of text
+      if(current_word<word_count-1) {
+        current_word++; 
+        current_character += word_length+1;
+        }//go to next word until end of text
     }
   } 
   if(joy_up) {
@@ -277,10 +278,11 @@ void main_page(){
     display.setFont(&FreeMono9pt7b);
   }
   if (highlight) {
-    highlight_word(words[current_word]);
+    highlight_word(getWord(current_character));
   } else {
-    display.print(words[current_word]);
+    display.print(getWord(current_character));
   }
+  last_word_length = word_length;
   display.setFont(0);
 
   //indicate joysticks input
