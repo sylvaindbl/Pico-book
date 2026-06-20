@@ -2,6 +2,9 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <fonts/FreeMono9pt7b.h>
+#include <Adafruit_LittleFS.h>
+#include <InternalFileSystem.h>
+using namespace Adafruit_LittleFS_Namespace;
 
 // ── Display ──────────────────────────────────────────
 #define SCREEN_WIDTH  128
@@ -18,8 +21,44 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define JOY_Y   A1
 #define JOY_BTN 2
 
+struct SavedData {
+  int font_selected;
+  int dark_mode;
+  int highlight;
+  int current_word;
+  int current_page;
+} data;
+
+File file(InternalFS);
+
+void saveData() {
+  InternalFS.remove("data.bin");
+  file.open("data.bin", FILE_O_WRITE);
+  if (file) {
+    file.write((uint8_t*)&data, sizeof(data));  // save struct as bytes
+    file.close();
+  }
+}
+
 void setup() {
   Serial.begin(115200);
+  InternalFS.begin();
+
+  file.open("data.bin", FILE_O_READ);
+  if (file) {
+    // file exists — load it
+    file.read((uint8_t*)&data, sizeof(data));
+    file.close();
+    data.current_page = 0;
+  } else {
+    // first boot — set defaults
+    data.font_selected = 1;
+    data.dark_mode = 1;
+    data.highlight = 0;
+    saveData();
+  }
+
+  // address 0, reads into variable
 
   // Joystick button
   pinMode(JOY_BTN, INPUT_PULLUP);
@@ -42,27 +81,30 @@ void setup() {
 
 //global variables
 
-bool joy_left, joy_right, joy_up, joy_down;
-int current_page=0;
+bool joy_left, joy_right, joy_up, joy_down, btn;
+
 int speed=50;
 int interval;
-bool btn;
-int font_selected=1;
-int dark_mode=1;
-int highlight=0;
+
+
 
 void highlight_word(String word){
   int16_t tx, ty;
   uint16_t tw, th;
   display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
-  display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE); //add white rectangle behind it
+  if (data.font_selected==1) {
+    display.fillRect(tx - 2, ty + 13, tw + 4, th + 4, WHITE);//change the box location if font 1 is selected
+  } else {
+    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
+  }
+    //add white rectangle behind it
   display.setTextColor(BLACK);
   display.print(word); //print the text
   display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
 }
+
 //function runned every frame
 void loop() {
-
   // ── Read joystick ───────────────────────────────────
     int joy_x   = analogRead(JOY_X);         // 0 - 1023
     int joy_y   = analogRead(JOY_Y);         // 0 - 1023
@@ -89,12 +131,12 @@ void loop() {
   } else {
     display.print(' ');
   }
-  if (current_page==1){
+  if (data.current_page==1){
     settings_page();
   } else {
     main_page();
   } 
-  if (dark_mode==false){
+  if (data.dark_mode==false){
     display.invertDisplay(true);
   } else {
     display.invertDisplay(false);
@@ -119,9 +161,9 @@ void settings_page(){
   };
 
   MenuItem menu[] = {
-    { "highlight word", &highlight, 0, 1},
-    { "dark mode", &dark_mode, 0, 1},
-    { "font", &font_selected, 0, 1},
+    { "highlight word", &data.highlight, 0, 1},
+    { "dark mode", &data.dark_mode, 0, 1},
+    { "font", &data.font_selected, 0, 1},
   };
   display.print("--settings page--");
       
@@ -149,7 +191,8 @@ void settings_page(){
       *menu[current_setting].value=0;
     } else {
       *menu[current_setting].value=*menu[current_setting].value+1;
-    } 
+    }
+    saveData();
   } 
   last_joy_right = joy_right;
 
@@ -171,9 +214,9 @@ void settings_page(){
     //joystick centered
   }
 
-    //tracks release of a button
+  //tracks release of a button
   if (btn==false && lastbtnstate==true){
-    current_page=0;
+    data.current_page=0;
   }
   lastbtnstate= btn;
 
@@ -185,12 +228,11 @@ void settings_page(){
 void main_page(){
 
   uint32_t now = millis(); //current time in milliseconds
-  static int current_word=0;
   static bool lastbtnstate=false;
   static uint32_t last_time=0;
 
   //split text into words
-  String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. end...";
+  String text = "Lorem ipsum dolor sit amet, consecteturamus adipiscing elit. end...";
   String words[100];
   int word_count = 0;
 
@@ -208,7 +250,7 @@ void main_page(){
   if(joy_left) {
     if (millis()- last_time >= interval) { //joystick is on the left for more than the intterval
       last_time = millis();
-      if(current_word>0) current_word--;//go to next word until end of text
+      if(data.current_word>0) data.current_word--;//go to next word until end of text
     }
   }
   if(joy_right) {
@@ -218,7 +260,7 @@ void main_page(){
       Serial.println(i);
       i++;
       last_time = millis();
-      if(current_word<word_count-1) current_word++;//go to next word until end of text
+      if(data.current_word<word_count-1) data.current_word++;//go to next word until end of text
     }
   } 
   if(joy_up) {
@@ -229,36 +271,30 @@ void main_page(){
   } 
   if(btn){
     //button pressed
-  } else {
-    //joystick centered
   }
+
+  //tracks release of a button
+  if (btn==false && lastbtnstate==true){
+    data.current_page=1;
+  }
+  lastbtnstate= btn;
   display.print("--the pico book--");
 
   display.setCursor(0, 15);
-  if(font_selected==1){
+  if(data.font_selected==1){
     display.setCursor(0, 25);
     display.setFont(&FreeMono9pt7b);
   }
-  if (highlight) {
-    highlight_word(words[current_word]);
+  if (data.highlight) {
+    highlight_word(words[data.current_word]);
   } else {
-    display.print(words[current_word]);
+    display.print(words[data.current_word]);
   }
   display.setFont(0);
 
   //indicate joysticks input
   display.setCursor(0, 0);
-  interval = map(speed, 0, 100, 500, 100); //map the speed variable into delay (slower speed => higher delay in milliseconds)
-
-
-
-  //tracks release of a button
-  if (btn==false && lastbtnstate==true){
-    current_page=1;
-  }
-  lastbtnstate= btn;
-
-  
+  interval = map(speed, 0, 100, 500, 70); //map the speed variable into delay (slower speed => higher delay in milliseconds)
 
   //print speed on the right bottom corner of the display
   display.setCursor(SCREEN_WIDTH-9*6, SCREEN_HEIGHT-10);
