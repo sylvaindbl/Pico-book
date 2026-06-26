@@ -20,8 +20,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // ── Joystick ─────────────────────────────────────────
 #define JOY_X   A0
-#define JOY_Y   A1
-#define JOY_BTN 2
+#define JOY_Y   A2
+#define JOY_BTN 1
 
 struct SavedData {
   int font_selected = 0;
@@ -46,6 +46,7 @@ void saveData() {
 void setup() {
   Serial.begin(115200);
   InternalFS.begin();
+  Serial.println("Setup Started");
 
   file.open("data.bin", FILE_O_READ);
   if (file) {
@@ -73,8 +74,9 @@ void setup() {
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(1);
   display.setCursor(20, 28);
-  display.print("building.");
+  display.print("building...");
   display.display();
+  pinMode(LED_BUILTIN, OUTPUT);
   delay(1000);
   Serial.println("Setup complete");
 }
@@ -85,7 +87,6 @@ bool joy_left, joy_right, joy_up, joy_down, btn;
 
 int speed=50;
 int interval;
-
 
 
 void highlight_word(String word){
@@ -109,21 +110,24 @@ void loop() {
     int joy_x   = analogRead(JOY_X);         // 0 - 1023
     int joy_y   = analogRead(JOY_Y);         // 0 - 1023
     btn    = !digitalRead(JOY_BTN);     // true when button is pressed
-
+  Serial.println("x");
+  Serial.println(joy_x);
+  Serial.println("y");
+  Serial.println(joy_y);
   display.clearDisplay();
   display.setCursor(0, 0);
   joy_left=false, joy_right=false, joy_up=false, joy_down=false;
-  if (joy_x<100){
+  if (joy_x>650){
     display.print((char)27);//left arrow symbol
     joy_left=true;
-  } else if(600>joy_x && joy_x>400) {
+  } else if(200>joy_x) {
     display.print((char)26);//right arrow symbol
     joy_right=true;
-  } else if(joy_y<100) {
+  } else if(joy_y>650) {
     display.print((char)24);//up arrow symbol
     joy_up=true;
     if (speed<100) speed++;
-  } else if (600>joy_y && joy_y>400) {
+  } else if (joy_y<200) {
     display.print((char)25);//down arrown symbol
     joy_down=true;
   } else if(btn==true){
@@ -227,16 +231,10 @@ void settings_page(){
 int word_length=0;
 int getPreviousWordLength(unsigned long character_index) {
   //skip back over the separator before the previous word
-  while (character_index > 0) {
-    char c = pgm_read_byte(&BOOK[character_index - 1]);
-    if (c != ' ' && c != '\n' && c != '\r') break;
-    character_index--;
-  }
-  //skip back over the previous word
   int character_count=0;
   while (character_index > 0) {
     char c = pgm_read_byte(&BOOK[character_index - 1]);
-    if (c == ' ' || c == '\n' || c == '\r') break;
+    if (c != ' ' && c != '\n' && c != '\r') break;
     character_index--; character_count++;
   }
   return ++character_count;
@@ -334,5 +332,5 @@ void main_page(){
   display.print("speed:");
   char buffer[4];
   sprintf(buffer,"%3d", speed); //format speed to be aligned on the right of the screen
-  display.print(buffer);  
+  display.print(buffer);
 }
