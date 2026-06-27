@@ -84,11 +84,15 @@ void setup() {
   Serial.println("Setup complete");
 
   // Counting the total number of words
-  /* while (data.current_character < 14000) {
+  BOOK_SIZE_WORDS = 0;
+  data.current_character = 0;
+  while (data.current_character < BOOK_SIZE_CHARACTERS) {
     getWord(data.current_character);
     BOOK_SIZE_WORDS ++;
     data.current_character += word_length;
-  } else */
+  }
+  data.current_character = 0;
+  data.current_word = 0;
 }
 
 //global variables
@@ -241,7 +245,6 @@ void settings_page(){
 
 int getPreviousWordLength(unsigned long character_index) {
   //skip back over the separator before the previous word
-  int character_count=0;
   while (character_index > 0) {
     char c = pgm_read_byte(&BOOK[character_index - 1]);
     if (c != ' ' && c != '\n' && c != '\r') break;
@@ -286,7 +289,7 @@ void main_page(){
   if(joy_left) {
     if (millis()- last_time >= interval) { //joystick is on the left for more than the interval
       last_time = millis();
-      if(data.current_character >= 0) {
+      if(data.current_character > 0) {
         data.current_word--;//update counter
         data.current_character -= getPreviousWordLength(data.current_character);//go to the character index of the previous word
       } else {
