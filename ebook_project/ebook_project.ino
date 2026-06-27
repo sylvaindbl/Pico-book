@@ -245,6 +245,13 @@ int getPreviousWordLength(unsigned long character_index) {
   while (character_index > 0) {
     char c = pgm_read_byte(&BOOK[character_index - 1]);
     if (c != ' ' && c != '\n' && c != '\r') break;
+    character_index--;
+  }
+  //skip back over the previous word
+  int character_count=0;
+  while (character_index > 0) {
+    char c = pgm_read_byte(&BOOK[character_index - 1]);
+    if (c == ' ' || c == '\n' || c == '\r') break;
     character_index--; character_count++;
   }
   return ++character_count;
