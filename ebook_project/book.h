@@ -1,5 +1,5 @@
 #pragma once
-const unsigned long BOOK_SIZE = 14113;
+const unsigned long BOOK_SIZE_CHARACTERS = 14113;
 const char BOOK[] PROGMEM = R"BOOKTEXT(
 
 ANSI C

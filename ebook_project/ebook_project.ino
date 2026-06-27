@@ -43,6 +43,9 @@ void saveData() {
   }
 }
 
+int BOOK_SIZE_WORDS = 0;
+int word_length = 0;
+
 void setup() {
   Serial.begin(115200);
   InternalFS.begin();
@@ -79,6 +82,13 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   delay(1000);
   Serial.println("Setup complete");
+
+  // Counting the total number of words
+  /* while (data.current_character < 14000) {
+    getWord(data.current_character);
+    BOOK_SIZE_WORDS ++;
+    data.current_character += word_length;
+  } else */
 }
 
 //global variables
@@ -228,7 +238,7 @@ void settings_page(){
   display.setCursor(0, 50);
   display.print("press button to save"); 
 }
-int word_length=0;
+
 int getPreviousWordLength(unsigned long character_index) {
   //skip back over the separator before the previous word
   int character_count=0;
@@ -243,14 +253,14 @@ String getWord(unsigned long character_index) {
   String word = "";
 
   // skip leading spaces/newlines
-  while (character_index < BOOK_SIZE) {
+  while (character_index < BOOK_SIZE_CHARACTERS) {
     char c = pgm_read_byte(&BOOK[character_index]);
     if (c != ' ' && c != '\n' && c != '\r') break;
     character_index++;
   }
   word_length=0;
   // read characters until next space/newline
-  while (character_index < BOOK_SIZE) {
+  while (character_index < BOOK_SIZE_CHARACTERS) {
     char c = pgm_read_byte(&BOOK[character_index]);
     if (c == ' ' || c == '\n' || c == '\r') break;
     word += c;
@@ -282,7 +292,7 @@ void main_page(){
     if (millis()- last_time >= interval) { //joystick is on the right for more than the interval
       i++;
       last_time = millis();
-      if(data.current_character<BOOK_SIZE) {
+      if(data.current_character<BOOK_SIZE_CHARACTERS) {
         data.current_word++;//update word counter
         data.current_character += word_length;
         }//go to next word until end of text
@@ -319,9 +329,9 @@ void main_page(){
 
   //display progression: current character over total
   display.setCursor(0, SCREEN_HEIGHT-10);
-  display.print(data.current_character);
+  display.print(data.current_word);
   display.print("/");
-  display.print(BOOK_SIZE);
+  display.print(BOOK_SIZE_WORDS);
 
   //indicate joysticks input
   display.setCursor(0, 0);
