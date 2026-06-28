@@ -245,15 +245,7 @@ void settings_page(){
   display.setCursor(0, 50);
   display.print("press button to save"); 
 }
-void set_font(){
-  display.setCursor(1, 15);
-  if(data.font_selected==1){
-    display.setCursor(0, 25);
-    display.setFont(&FreeMono9pt7b);
-  } else if(data.font_selected==2){
-    display.setFont(&FreeSerif9pt7b);
-  } 
-}
+
 void main_page(){
 
   uint32_t now = millis(); //current time in milliseconds
@@ -366,13 +358,29 @@ void highlight_word(String word){
   int16_t tx, ty;
   uint16_t tw, th;
   display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
-  if (data.font_selected==1) {
-    display.fillRect(tx - 2, ty + 13, tw + 4, th + 4, WHITE);//change the box location if font 1 is selected
-  } else {
-    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
+  if (data.font_selected==0) {
+    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);//add white rectangle behind the text
+  } else if (data.font_selected==2){
+    display.fillRect(tx - 2, 8, tw + 4, 20, WHITE);//adjust the box location based on the font
+  } else if ((data.font_selected==1)) {
+    display.fillRect(tx - 2, 18, tw + 4, 20, WHITE); //adjust the box location based on the font
   }
-    //add white rectangle behind it
+  /* if (tw > SCREENWIDTH){
+    display("")
+  }  */
   display.setTextColor(BLACK);
   display.print(word); //print the text
   display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
+}
+
+void set_font(){ //changes font according to the one chosen in the settings
+  display.setCursor(1, 15);
+  if(data.font_selected==1){
+    display.setCursor(0, 25);
+    display.setFont(&FreeMono9pt7b);
+  } else if(data.font_selected==2){
+    display.setFont(&FreeSerif9pt7b);
+  } else {
+    display.setFont(0);
+  }
 }
