@@ -35,7 +35,6 @@ int word_length = 0;
 //joystick
 bool joy_left, joy_right, joy_up, joy_down, btn;
 
-int speed=50;
 int interval;
 
 struct SavedData {
@@ -45,6 +44,7 @@ struct SavedData {
   int current_word = 0;
   int current_page = 0;
   int32_t current_character = 0;
+  int speed = 60;
 } data;
 
 File file(InternalFS);
@@ -132,7 +132,6 @@ void loop() {
   } else if(joy_y>650) {
     display.print((char)24);//up arrow symbol
     joy_up=true;
-    if (speed<100) speed++;
   } else if (joy_y<200) {
     display.print((char)25);//down arrown symbol
     joy_down=true;
@@ -272,10 +271,10 @@ void main_page(){
     }
   } 
   if(joy_up) {
-    if (speed<100) speed++;
+    if (data.speed<100) data.speed++;
   } 
   if (joy_down) {
-    if (speed>0) speed--;
+    if (data.speed>0) data.speed--;
   } 
   if(btn){
     //button pressed
@@ -309,13 +308,13 @@ void main_page(){
 
   //indicate joysticks input
   display.setCursor(0, 0);
-  interval = map(speed, 0, 100, 500, 70); //map the speed variable into delay (slower speed => higher delay in milliseconds)
+  interval = map(data.speed, 0, 100, 500, 70); //map the speed variable into delay (slower speed => higher delay in milliseconds)
 
   //print speed on the right bottom corner of the display
   display.setCursor(SCREEN_WIDTH-9*6, SCREEN_HEIGHT-10);
   display.print("speed:");
   char buffer[4];
-  sprintf(buffer,"%3d", speed); //format speed to be aligned on the right of the screen
+  sprintf(buffer,"%3d", data.speed); //format speed to be aligned on the right of the screen
   display.print(buffer);
 }
 
