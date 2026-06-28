@@ -209,7 +209,6 @@ void settings_page(){
     } else {
       *menu[current_setting].value=*menu[current_setting].value+1;
     }
-    saveData();
   } 
   last_joy_right = joy_right;
 
@@ -234,9 +233,13 @@ void settings_page(){
   //tracks release of a button
   if (btn==false && lastbtnstate==true){
     data.current_page=0;
+    display.clearDisplay();
+    display.setCursor(10, 25);
+    display.printf("saved!");
+    display.display();
+    saveData();
   }
   lastbtnstate= btn;
-
   
   display.setCursor(0, 50);
   display.print("press button to save"); 
@@ -320,6 +323,7 @@ void main_page(){
   //tracks release of a button
   if (btn==false && lastbtnstate==true){
     data.current_page=1;
+    //saveData();
   }
   lastbtnstate= btn;
   display.print("--the pico book--");
