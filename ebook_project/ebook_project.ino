@@ -85,14 +85,13 @@ void setup() {
 
   // Counting the total number of words
   BOOK_SIZE_WORDS = 0;
-  data.current_character = 0;
-  while (data.current_character < BOOK_SIZE_CHARACTERS) {
-    getWord(data.current_character);
+
+  int count_character = 0;
+  while (count_character < BOOK_SIZE_CHARACTERS) {
+    getWord(count_character);
     BOOK_SIZE_WORDS ++;
-    data.current_character += word_length;
+    count_character += word_length;
   }
-  data.current_character = 0;
-  data.current_word = 0;
 }
 
 //global variables
@@ -289,7 +288,7 @@ void main_page(){
   if(joy_left) {
     if (millis()- last_time >= interval) { //joystick is on the left for more than the interval
       last_time = millis();
-      if(data.current_character > 0) {
+      if(data.current_character > 1) {
         data.current_word--;//update counter
         data.current_character -= getPreviousWordLength(data.current_character);//go to the character index of the previous word
       } else {
