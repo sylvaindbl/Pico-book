@@ -23,6 +23,20 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define JOY_Y   A2
 #define JOY_BTN 1
 
+// ALL GLOBAL VARIABLES
+
+//word and character counting
+int BOOK_SIZE_WORDS = 0;
+
+//scrolling feature
+int word_length = 0;
+
+//joystick
+bool joy_left, joy_right, joy_up, joy_down, btn;
+
+int speed=50;
+int interval;
+
 struct SavedData {
   int font_selected = 0;
   int dark_mode = 1;
@@ -43,9 +57,6 @@ void saveData() {
   }
 }
 
-int BOOK_SIZE_WORDS = 0;
-int word_length = 0;
-
 void setup() {
   Serial.begin(115200);
   InternalFS.begin();
@@ -60,8 +71,6 @@ void setup() {
   } else {
     saveData();
   }
-
-  // address 0, reads into variable
 
   // Joystick button
   pinMode(JOY_BTN, INPUT_PULLUP);
@@ -84,23 +93,13 @@ void setup() {
   Serial.println("Setup complete");
 
   // Counting the total number of words
-  BOOK_SIZE_WORDS = 0;
-
-  int count_character = 0;
+  int count_character = 0; //variable only used for counting 
   while (count_character < BOOK_SIZE_CHARACTERS) {
     getWord(count_character);
     BOOK_SIZE_WORDS ++;
     count_character += word_length;
   }
 }
-
-//global variables
-
-bool joy_left, joy_right, joy_up, joy_down, btn;
-
-int speed=50;
-int interval;
-
 
 void highlight_word(String word){
   int16_t tx, ty;
