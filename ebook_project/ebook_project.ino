@@ -1,11 +1,14 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <fonts/FreeMono9pt7b.h>
 #include <Adafruit_LittleFS.h>
 #include <InternalFileSystem.h>
 #include <avr/pgmspace.h>
 #include "book.h"
+
+//fonts
+#include <fonts/FreeMono9pt7b.h>
+#include <fonts/FreeSerif9pt7b.h>
 using namespace Adafruit_LittleFS_Namespace;
 
 // Display
@@ -179,7 +182,7 @@ void settings_page(){
   MenuItem menu[] = {   
     { "highlight word", &data.highlight, 0, 1},
     { "dark mode", &data.dark_mode, 0, 1},
-    { "font", &data.font_selected, 0, 1},
+    { "font", &data.font_selected, 0, 2},
   };
   display.print("--settings page--");
       
@@ -238,7 +241,9 @@ void settings_page(){
     data.current_page=0;
     display.clearDisplay();
     display.setCursor(10, 25);
+    set_font();
     display.printf("saved!");
+    display.setFont(0);
     display.display();
     saveData();
   }
@@ -294,19 +299,18 @@ void main_page(){
   }
   lastbtnstate= btn;
 
-  display.print("--the pico book--");
- 
-  display.setCursor(1, 15);
-  if(data.font_selected==1){
-    display.setCursor(0, 25);
-    display.setFont(&FreeMono9pt7b);
-  }
+  //set font
+  set_font();
+  
   if (data.highlight) {
     highlight_word(getWord(data.current_character));
   } else {
     display.print(getWord(data.current_character));
   }
   display.setFont(0);
+
+
+  
 
   //display progression: current word over total
   display.setCursor(0, SCREEN_HEIGHT-10);
@@ -360,13 +364,31 @@ void highlight_word(String word){
   int16_t tx, ty;
   uint16_t tw, th;
   display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
-  if (data.font_selected==1) {
-    display.fillRect(tx - 2, ty + 13, tw + 4, th + 4, WHITE);//change the box location if font 1 is selected
-  } else {
-    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
+  if (data.font_selected==0) {
+    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);//add white rectangle behind the text
+  } else if (data.font_selected==2){
+    display.fillRect(tx - 2, 8, tw + 4, 20, WHITE);//adjust the box location based on the font
+  } else if ((data.font_selected==1)) {
+    display.fillRect(tx - 2, 18, tw + 4, 20, WHITE); //adjust the box location based on the font
   }
-    //add white rectangle behind it
+  
   display.setTextColor(BLACK);
   display.print(word); //print the text
+  if (tw >= SCREEN_WIDTH-5){
+    display.setTextColor(BLACK);
+    display.print("-");
+  } 
   display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
+}
+
+void set_font(){ //changes font according to the one chosen in the settings
+  display.setCursor(1, 15);
+  if(data.font_selected==1){
+    display.setCursor(0, 25);
+    display.setFont(&FreeMono9pt7b);
+  } else if(data.font_selected==2){
+    display.setFont(&FreeSerif9pt7b);
+  } else {
+    display.setFont(0);
+  }
 }
