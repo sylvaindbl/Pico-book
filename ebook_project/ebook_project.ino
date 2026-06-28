@@ -27,6 +27,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 //word and character counting
 int BOOK_SIZE_WORDS = 0;
+int BOOK_SIZE_CHARACTERS = 0;
 
 //scrolling feature
 int word_length = 0;
@@ -41,9 +42,9 @@ struct SavedData {
   int font_selected = 0;
   int dark_mode = 1;
   int highlight = 0;
-  int current_word = 0;
+  int current_word = 1;
   int current_page = 0;
-  int32_t current_character = 0;
+  int32_t current_character = 1;
 } data;
 
 File file(InternalFS);
@@ -92,13 +93,25 @@ void setup() {
   delay(1000);
   Serial.println("Setup complete");
 
+  // Counting the total number of characters
+  int count_character = 0; //variable only used for counting
+  while (pgm_read_byte(&BOOK[count_character])!= '\0') {
+    count_character ++;
+  } 
+  BOOK_SIZE_CHARACTERS = count_character;
+
   // Counting the total number of words
-  int count_character = 0; //variable only used for counting 
+  count_character = 0; //reset of the counting variable
   while (count_character < BOOK_SIZE_CHARACTERS) {
     getWord(count_character);
     BOOK_SIZE_WORDS ++;
     count_character += word_length;
   }
+  BOOK_SIZE_WORDS --; //because the terminating char is seen as a word
+
+  //reset
+  /* data.current_character = 0;
+  data.current_word = 1; */
 }
 
 void highlight_word(String word){
@@ -252,13 +265,13 @@ int getPreviousWordLength(unsigned long character_index) {
     character_index--;
   }
   //skip back over the previous word
-  int character_count=0;
+  int count_character=0; //again, a variable only used for counting
   while (character_index > 0) {
     char c = pgm_read_byte(&BOOK[character_index - 1]);
     if (c == ' ' || c == '\n' || c == '\r') break;
-    character_index--; character_count++;
+    character_index--; count_character++;
   }
-  return ++character_count;
+  return ++count_character;
 }
 String getWord(unsigned long character_index) {
   String word = "";
