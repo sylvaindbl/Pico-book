@@ -23,6 +23,20 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define JOY_Y   A2
 #define JOY_BTN 1
 
+// ALL GLOBAL VARIABLES
+
+//word and character counting
+int BOOK_SIZE_WORDS = 0;
+
+//scrolling feature
+int word_length = 0;
+
+//joystick
+bool joy_left, joy_right, joy_up, joy_down, btn;
+
+int speed=50;
+int interval;
+
 struct SavedData {
   int font_selected = 0;
   int dark_mode = 1;
@@ -58,8 +72,6 @@ void setup() {
     saveData();
   }
 
-  // address 0, reads into variable
-
   // Joystick button
   pinMode(JOY_BTN, INPUT_PULLUP);
 
@@ -79,15 +91,15 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   delay(1000);
   Serial.println("Setup complete");
+
+  // Counting the total number of words
+  int count_character = 0; //variable only used for counting 
+  while (count_character < BOOK_SIZE_CHARACTERS) {
+    getWord(count_character);
+    BOOK_SIZE_WORDS ++;
+    count_character += word_length;
+  }
 }
-
-//global variables
-
-bool joy_left, joy_right, joy_up, joy_down, btn;
-
-int speed=50;
-int interval;
-
 
 void highlight_word(String word){
   int16_t tx, ty;
@@ -196,7 +208,6 @@ void settings_page(){
     } else {
       *menu[current_setting].value=*menu[current_setting].value+1;
     }
-    saveData();
   } 
   last_joy_right = joy_right;
 
@@ -221,14 +232,18 @@ void settings_page(){
   //tracks release of a button
   if (btn==false && lastbtnstate==true){
     data.current_page=0;
+    display.clearDisplay();
+    display.setCursor(10, 25);
+    display.printf("saved!");
+    display.display();
+    saveData();
   }
   lastbtnstate= btn;
-
   
   display.setCursor(0, 50);
   display.print("press button to save"); 
 }
-int word_length=0;
+
 int getPreviousWordLength(unsigned long character_index) {
   //skip back over the separator before the previous word
   while (character_index > 0) {
@@ -249,14 +264,14 @@ String getWord(unsigned long character_index) {
   String word = "";
 
   // skip leading spaces/newlines
-  while (character_index < BOOK_SIZE) {
+  while (character_index < BOOK_SIZE_CHARACTERS) {
     char c = pgm_read_byte(&BOOK[character_index]);
     if (c != ' ' && c != '\n' && c != '\r') break;
     character_index++;
   }
   word_length=0;
   // read characters until next space/newline
-  while (character_index < BOOK_SIZE) {
+  while (character_index < BOOK_SIZE_CHARACTERS) {
     char c = pgm_read_byte(&BOOK[character_index]);
     if (c == ' ' || c == '\n' || c == '\r') break;
     word += c;
@@ -275,7 +290,7 @@ void main_page(){
   if(joy_left) {
     if (millis()- last_time >= interval) { //joystick is on the left for more than the interval
       last_time = millis();
-      if(data.current_character >= 0) {
+      if(data.current_character > 1) {
         data.current_word--;//update counter
         data.current_character -= getPreviousWordLength(data.current_character);//go to the character index of the previous word
       } else {
@@ -288,7 +303,7 @@ void main_page(){
     if (millis()- last_time >= interval) { //joystick is on the right for more than the interval
       i++;
       last_time = millis();
-      if(data.current_character<BOOK_SIZE) {
+      if(data.current_character<BOOK_SIZE_CHARACTERS) {
         data.current_word++;//update word counter
         data.current_character += word_length;
         }//go to next word until end of text
@@ -307,6 +322,7 @@ void main_page(){
   //tracks release of a button
   if (btn==false && lastbtnstate==true){
     data.current_page=1;
+    //saveData();
   }
   lastbtnstate= btn;
   display.print("--the pico book--");
@@ -325,9 +341,9 @@ void main_page(){
 
   //display progression: current character over total
   display.setCursor(0, SCREEN_HEIGHT-10);
-  display.print(data.current_character);
+  display.print(data.current_word);
   display.print("/");
-  display.print(BOOK_SIZE);
+  display.print(BOOK_SIZE_WORDS);
 
   //indicate joysticks input
   display.setCursor(0, 0);
