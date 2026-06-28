@@ -63,8 +63,9 @@ void reset(){
   data.current_word=0;
 }
 
+//function that is called once at the beginning of the code
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200); 
   InternalFS.begin();
   Serial.println("Setup Started");
 
@@ -111,12 +112,17 @@ void setup() {
     BOOK_SIZE_WORDS ++;
     count_character += word_length;
   }
-  BOOK_SIZE_WORDS--;
+  BOOK_SIZE_WORDS--; //since word count is counting the null terminator as a word
+
+  //if a new text gets upload with less words than the previous one and the cursor beeing at a place that doesen't exist in the new text, the reset function is needed to not get stuck
+  if (data.current_word > BOOK_SIZE_WORDS) {
+    reset();
+  }
 }
 
-//function runned every frame
+//function running every frame
 void loop() {
-  // ── Read joystick ───────────────────────────────────
+  //Read joystick
     int joy_x   = analogRead(JOY_X);         // 0 - 1023
     int joy_y   = analogRead(JOY_Y);         // 0 - 1023
     btn    = !digitalRead(JOY_BTN);     // true when button is pressed
@@ -156,6 +162,7 @@ void loop() {
   delay(50);
 }
 
+//when called, it showes the settings page
 void settings_page(){
   static bool lastbtnstate=false;
   static uint32_t last_joy_left;
@@ -170,7 +177,7 @@ void settings_page(){
   int maxVal;
   };
 
-  MenuItem menu[] = {
+  MenuItem menu[] = {   
     { "highlight word", &data.highlight, 0, 1},
     { "dark mode", &data.dark_mode, 0, 1},
     { "font", &data.font_selected, 0, 1},
@@ -242,8 +249,8 @@ void settings_page(){
   display.print("press button to save"); 
 }
 
+//when called its showing the main page where you can read the text
 void main_page(){
-
   uint32_t now = millis(); //current time in milliseconds
   static bool lastbtnstate=false;
   static uint32_t last_time=0;
@@ -287,8 +294,9 @@ void main_page(){
     //saveData();
   }
   lastbtnstate= btn;
-  display.print("--the pico book--");
 
+  display.print("--the pico book--");
+ 
   display.setCursor(1, 15);
   if(data.font_selected==1){
     display.setCursor(0, 25);
