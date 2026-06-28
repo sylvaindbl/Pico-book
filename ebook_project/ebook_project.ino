@@ -42,9 +42,9 @@ struct SavedData {
   int font_selected = 0;
   int dark_mode = 1;
   int highlight = 0;
-  int current_word = 1;
+  int current_word = 0;
   int current_page = 0;
-  int32_t current_character = 1;
+  int32_t current_character = 0;
 } data;
 
 File file(InternalFS);
@@ -107,7 +107,6 @@ void setup() {
     BOOK_SIZE_WORDS ++;
     count_character += word_length;
   }
-  BOOK_SIZE_WORDS --; //because the terminating char is seen as a word
 
   //reset
   /* data.current_character = 0;
@@ -135,10 +134,6 @@ void loop() {
     int joy_x   = analogRead(JOY_X);         // 0 - 1023
     int joy_y   = analogRead(JOY_Y);         // 0 - 1023
     btn    = !digitalRead(JOY_BTN);     // true when button is pressed
-  Serial.println("x");
-  Serial.println(joy_x);
-  Serial.println("y");
-  Serial.println(joy_y);
   display.clearDisplay();
   display.setCursor(0, 0);
   joy_left=false, joy_right=false, joy_up=false, joy_down=false;
@@ -316,10 +311,11 @@ void main_page(){
     if (millis()- last_time >= interval) { //joystick is on the right for more than the interval
       i++;
       last_time = millis();
-      if(data.current_character<BOOK_SIZE_CHARACTERS) {
+      if(data.current_character<BOOK_SIZE_CHARACTERS-1) {
         data.current_word++;//update word counter
         data.current_character += word_length;
         }//go to next word until end of text
+        Serial.println(BOOK_SIZE_CHARACTERS);
     }
   } 
   if(joy_up) {
@@ -354,7 +350,7 @@ void main_page(){
 
   //display progression: current character over total
   display.setCursor(0, SCREEN_HEIGHT-10);
-  display.print(data.current_word);
+  display.print(data.current_word+1);
   display.print("/");
   display.print(BOOK_SIZE_WORDS);
 

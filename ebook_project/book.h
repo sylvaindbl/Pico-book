@@ -1,5 +1,3 @@
 #pragma once
 const char BOOK[] PROGMEM = R"BOOKTEXT(
-
-One two three.
-)BOOKTEXT";
+  one two three.)BOOKTEXT";
