@@ -1,11 +1,14 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <fonts/FreeMono9pt7b.h>
 #include <Adafruit_LittleFS.h>
 #include <InternalFileSystem.h>
 #include <avr/pgmspace.h>
 #include "book.h"
+
+//fonts
+#include <fonts/FreeMono9pt7b.h>
+#include <fonts/FreeSerif9pt7b.h>
 using namespace Adafruit_LittleFS_Namespace;
 
 // Display
@@ -172,7 +175,7 @@ void settings_page(){
   MenuItem menu[] = {
     { "highlight word", &data.highlight, 0, 1},
     { "dark mode", &data.dark_mode, 0, 1},
-    { "font", &data.font_selected, 0, 1},
+    { "font", &data.font_selected, 0, 2},
   };
   display.print("--settings page--");
       
@@ -288,17 +291,24 @@ void main_page(){
   lastbtnstate= btn;
   display.print("--the pico book--");
 
+  //set font
   display.setCursor(1, 15);
   if(data.font_selected==1){
     display.setCursor(0, 25);
     display.setFont(&FreeMono9pt7b);
-  }
+  } else if(data.font_selected==2){
+    display.setFont(&FreeSerif9pt7b);
+  } 
+  
   if (data.highlight) {
     highlight_word(getWord(data.current_character));
   } else {
     display.print(getWord(data.current_character));
   }
   display.setFont(0);
+
+
+  
 
   //display progression: current word over total
   display.setCursor(0, SCREEN_HEIGHT-10);
