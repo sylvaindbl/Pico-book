@@ -234,7 +234,9 @@ void settings_page(){
     data.current_page=0;
     display.clearDisplay();
     display.setCursor(10, 25);
+    set_font();
     display.printf("saved!");
+    display.setFont(0);
     display.display();
     saveData();
   }
@@ -243,7 +245,15 @@ void settings_page(){
   display.setCursor(0, 50);
   display.print("press button to save"); 
 }
-
+void set_font(){
+  display.setCursor(1, 15);
+  if(data.font_selected==1){
+    display.setCursor(0, 25);
+    display.setFont(&FreeMono9pt7b);
+  } else if(data.font_selected==2){
+    display.setFont(&FreeSerif9pt7b);
+  } 
+}
 void main_page(){
 
   uint32_t now = millis(); //current time in milliseconds
@@ -292,13 +302,7 @@ void main_page(){
   display.print("--the pico book--");
 
   //set font
-  display.setCursor(1, 15);
-  if(data.font_selected==1){
-    display.setCursor(0, 25);
-    display.setFont(&FreeMono9pt7b);
-  } else if(data.font_selected==2){
-    display.setFont(&FreeSerif9pt7b);
-  } 
+  set_font();
   
   if (data.highlight) {
     highlight_word(getWord(data.current_character));
