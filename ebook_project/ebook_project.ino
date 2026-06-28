@@ -8,7 +8,7 @@
 #include "book.h"
 using namespace Adafruit_LittleFS_Namespace;
 
-// ── Display ──────────────────────────────────────────
+// Display
 #define SCREEN_WIDTH  128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET    -1
@@ -18,7 +18,7 @@ using namespace Adafruit_LittleFS_Namespace;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// ── Joystick ─────────────────────────────────────────
+// Joystick
 #define JOY_X   A0
 #define JOY_Y   A2
 #define JOY_BTN 1
@@ -27,6 +27,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 //word and character counting
 int BOOK_SIZE_WORDS = 0;
+int BOOK_SIZE_CHARACTERS = 0;
 
 //scrolling feature
 int word_length = 0;
@@ -57,6 +58,11 @@ void saveData() {
   }
 }
 
+void reset(){
+  data.current_character=0;
+  data.current_word=0;
+}
+
 void setup() {
   Serial.begin(115200);
   InternalFS.begin();
@@ -80,7 +86,7 @@ void setup() {
     Serial.println("Display not found — check wiring!");
     while (true);
   }
-  
+
   // Startup screen
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
@@ -92,28 +98,20 @@ void setup() {
   delay(1000);
   Serial.println("Setup complete");
 
+  // Counting the total number of characters
+  int count_character = 0; //variable only used for counting
+  while (pgm_read_byte(&BOOK[count_character])!= '\0') {
+    count_character ++;
+  } 
+  BOOK_SIZE_CHARACTERS = count_character;
+
   // Counting the total number of words
-  int count_character = 0; //variable only used for counting 
-  while (count_character < BOOK_SIZE_CHARACTERS) {
-    getWord(count_character);
+  count_character = 0; //reset of the counting variable
+  while (getWord(count_character)!= "") {
     BOOK_SIZE_WORDS ++;
     count_character += word_length;
   }
-}
-
-void highlight_word(String word){
-  int16_t tx, ty;
-  uint16_t tw, th;
-  display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
-  if (data.font_selected==1) {
-    display.fillRect(tx - 2, ty + 13, tw + 4, th + 4, WHITE);//change the box location if font 1 is selected
-  } else {
-    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
-  }
-    //add white rectangle behind it
-  display.setTextColor(BLACK);
-  display.print(word); //print the text
-  display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
+  BOOK_SIZE_WORDS--;
 }
 
 //function runned every frame
@@ -122,10 +120,6 @@ void loop() {
     int joy_x   = analogRead(JOY_X);         // 0 - 1023
     int joy_y   = analogRead(JOY_Y);         // 0 - 1023
     btn    = !digitalRead(JOY_BTN);     // true when button is pressed
-  Serial.println("x");
-  Serial.println(joy_x);
-  Serial.println("y");
-  Serial.println(joy_y);
   display.clearDisplay();
   display.setCursor(0, 0);
   joy_left=false, joy_right=false, joy_up=false, joy_down=false;
@@ -199,7 +193,11 @@ void settings_page(){
   }
 
   if (joy_left && !last_joy_left){//joystick was just moved to the left
-    //highlight? highlight= false: highlight=true;
+    reset();
+    display.clearDisplay();
+    display.print("reset!");
+    display.display();
+    delay(1000);
   } 
   last_joy_left = joy_left;
   if (joy_right && !last_joy_right){//joystick was just moved to the right
@@ -244,43 +242,6 @@ void settings_page(){
   display.print("press button to save"); 
 }
 
-int getPreviousWordLength(unsigned long character_index) {
-  //skip back over the separator before the previous word
-  while (character_index > 0) {
-    char c = pgm_read_byte(&BOOK[character_index - 1]);
-    if (c != ' ' && c != '\n' && c != '\r') break;
-    character_index--;
-  }
-  //skip back over the previous word
-  int character_count=0;
-  while (character_index > 0) {
-    char c = pgm_read_byte(&BOOK[character_index - 1]);
-    if (c == ' ' || c == '\n' || c == '\r') break;
-    character_index--; character_count++;
-  }
-  return ++character_count;
-}
-String getWord(unsigned long character_index) {
-  String word = "";
-
-  // skip leading spaces/newlines
-  while (character_index < BOOK_SIZE_CHARACTERS) {
-    char c = pgm_read_byte(&BOOK[character_index]);
-    if (c != ' ' && c != '\n' && c != '\r') break;
-    character_index++;
-  }
-  word_length=0;
-  // read characters until next space/newline
-  while (character_index < BOOK_SIZE_CHARACTERS) {
-    char c = pgm_read_byte(&BOOK[character_index]);
-    if (c == ' ' || c == '\n' || c == '\r') break;
-    word += c;
-    character_index++; word_length++;
-  }
-  word_length++;
-
-  return word;
-}
 void main_page(){
 
   uint32_t now = millis(); //current time in milliseconds
@@ -290,11 +251,12 @@ void main_page(){
   if(joy_left) {
     if (millis()- last_time >= interval) { //joystick is on the left for more than the interval
       last_time = millis();
-      if(data.current_character > 1) {
+      if(data.current_word > 0) {
         data.current_word--;//update counter
         data.current_character -= getPreviousWordLength(data.current_character);//go to the character index of the previous word
+        Serial.println("left");
       } else {
-        data.current_character=0;
+        //data.current_character=0;
       }
     }
   }
@@ -303,7 +265,7 @@ void main_page(){
     if (millis()- last_time >= interval) { //joystick is on the right for more than the interval
       i++;
       last_time = millis();
-      if(data.current_character<BOOK_SIZE_CHARACTERS) {
+      if(data.current_word<BOOK_SIZE_WORDS) {
         data.current_word++;//update word counter
         data.current_character += word_length;
         }//go to next word until end of text
@@ -339,11 +301,11 @@ void main_page(){
   }
   display.setFont(0);
 
-  //display progression: current character over total
+  //display progression: current word over total
   display.setCursor(0, SCREEN_HEIGHT-10);
-  display.print(data.current_word);
+  display.print(data.current_word+1); //+1 so that it starts at one and not zero
   display.print("/");
-  display.print(BOOK_SIZE_WORDS);
+  display.print(BOOK_SIZE_WORDS+1);
 
   //indicate joysticks input
   display.setCursor(0, 0);
@@ -355,4 +317,49 @@ void main_page(){
   char buffer[4];
   sprintf(buffer,"%3d", speed); //format speed to be aligned on the right of the screen
   display.print(buffer);
+}
+
+int getPreviousWordLength(unsigned long character_index) {
+    int total = 0;
+    // skip whitespace between current position and end of previous word
+    while (character_index > 0 && isSpace(pgm_read_byte(&BOOK[character_index - 1]))) {
+        character_index--; total++;
+    }
+    // skip the previous word itself
+    while (character_index > 0 && !isSpace(pgm_read_byte(&BOOK[character_index - 1]))) {
+        character_index--; total++;
+    }
+    return total;
+}
+String getWord(unsigned long character_index) {
+    String word = "";
+    word_length = 0;
+    int leading = 0;
+
+    while (character_index < BOOK_SIZE_CHARACTERS) {
+        char c = pgm_read_byte(&BOOK[character_index]);
+        if (c != ' ' && c != '\n' && c != '\r') break;
+        character_index++; leading++;
+    }
+    while (character_index < BOOK_SIZE_CHARACTERS) {
+        char c = pgm_read_byte(&BOOK[character_index]);
+        if (c == ' ' || c == '\n' || c == '\r') break;
+        word += c; character_index++; word_length++;
+    }
+    word_length += leading + 1;  // include skipped whitespace + one trailing separator
+    return word;
+}
+void highlight_word(String word){
+  int16_t tx, ty;
+  uint16_t tw, th;
+  display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
+  if (data.font_selected==1) {
+    display.fillRect(tx - 2, ty + 13, tw + 4, th + 4, WHITE);//change the box location if font 1 is selected
+  } else {
+    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
+  }
+    //add white rectangle behind it
+  display.setTextColor(BLACK);
+  display.print(word); //print the text
+  display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
 }
