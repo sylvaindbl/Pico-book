@@ -206,7 +206,7 @@ void settings_page(){
   if (joy_left && !last_joy_left){//joystick was just moved to the left
     reset();
     display.clearDisplay();
-    printCentered("reset the screen");
+    printCentered("reset!");
     display.display();
     delay(1000);
   } 
@@ -307,23 +307,24 @@ void main_page(){
     for (int i = 0; i < 21; i++) {
       display.clearDisplay();
       for (int j = 0; j < i; j++) {
-        buffer[j] = text[j];
+          buffer[j] = text[j];
         }
-      String arduinoString = String(buffer);
-      printCentered(arduinoString);
-      display.display();
-      delay (100);
-    }
-    check = false;
-  } else if (data.speed == 100 && check == false) {
-      display.setCursor(SCREEN_WIDTH - 9, 0);
-      display.print("X");
+        String arduinoString = String(buffer);
+        printCentered(arduinoString);
+        display.display();
+        delay (100);
+      }
+      check = false;
+    } else if (data.speed == 100 && check == false) {
+      display.setCursor(10 , 0);
+      display.print("Beast Mode active");
     } else if (data.speed != 100) {
-        check = true;
-     }
-  display.print(" --the pico book--");
+      display.print(" --the pico book--");
+      check = true;
+    }
+  
 
-    display.setCursor(1, 15);
+    display.setCursor(1, 20);
     if(data.font_selected==1){
     display.setCursor(0, 25);
     display.setFont(&FreeMono9pt7b);
