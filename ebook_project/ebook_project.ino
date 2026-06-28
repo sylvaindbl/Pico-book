@@ -86,7 +86,7 @@ void setup() {
     Serial.println("Display not found — check wiring!");
     while (true);
   }
-  
+
   // Startup screen
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
@@ -107,19 +107,11 @@ void setup() {
 
   // Counting the total number of words
   count_character = 0; //reset of the counting variable
-  while (count_character < BOOK_SIZE_CHARACTERS) {
-    if (getWord(count_character)=="NO WORD"){
-      //not counting this
-    } else{
-      BOOK_SIZE_WORDS ++;
-    }
+  while (getWord(count_character)!= "") {
+    BOOK_SIZE_WORDS ++;
     count_character += word_length;
   }
-  BOOK_SIZE_WORDS --; //because the terminating char is seen as a word
-
-  //reset
-  /* data.current_character = 0;
-  data.current_word = 1; */
+  BOOK_SIZE_WORDS--;
 }
 
 //function runned every frame
@@ -328,44 +320,34 @@ void main_page(){
 }
 
 int getPreviousWordLength(unsigned long character_index) {
-  //skip back over the separator before the previous word
-  while (character_index > 0) {
-    char c = pgm_read_byte(&BOOK[character_index - 1]);
-    if (c != ' ' && c != '\n' && c != '\r') break;
-    character_index--;
-  }
-  //skip back over the previous word
-  int count_character=0; //again, a variable only used for counting
-  while (character_index > 0) {
-    char c = pgm_read_byte(&BOOK[character_index - 1]);
-    if (c == ' ' || c == '\n' || c == '\r') break;
-    character_index--; count_character++;
-  }
-  return ++count_character;
+    int total = 0;
+    // skip whitespace between current position and end of previous word
+    while (character_index > 0 && isSpace(pgm_read_byte(&BOOK[character_index - 1]))) {
+        character_index--; total++;
+    }
+    // skip the previous word itself
+    while (character_index > 0 && !isSpace(pgm_read_byte(&BOOK[character_index - 1]))) {
+        character_index--; total++;
+    }
+    return total;
 }
-
 String getWord(unsigned long character_index) {
-  String word = "";
-    // skip leading spaces/newlines
-    while (character_index < BOOK_SIZE_CHARACTERS) {
-      char c = pgm_read_byte(&BOOK[character_index]);
-      if (c != ' ' && c != '\n' && c != '\r') break;
-      character_index++;
-    }
-    word_length=0;
-    // read characters until next space/newline
-    while (character_index < BOOK_SIZE_CHARACTERS) {
-      char c = pgm_read_byte(&BOOK[character_index]);
-      if (c == ' ' || c == '\n' || c == '\r') break;
-      word += c;
-      character_index++; word_length++;
-    }
-  if (word_length==0){
-    return "NO WORD";
-  }
-  word_length++;
+    String word = "";
+    word_length = 0;
+    int leading = 0;
 
-  return word;
+    while (character_index < BOOK_SIZE_CHARACTERS) {
+        char c = pgm_read_byte(&BOOK[character_index]);
+        if (c != ' ' && c != '\n' && c != '\r') break;
+        character_index++; leading++;
+    }
+    while (character_index < BOOK_SIZE_CHARACTERS) {
+        char c = pgm_read_byte(&BOOK[character_index]);
+        if (c == ' ' || c == '\n' || c == '\r') break;
+        word += c; character_index++; word_length++;
+    }
+    word_length += leading + 1;  // include skipped whitespace + one trailing separator
+    return word;
 }
 void highlight_word(String word){
   int16_t tx, ty;
