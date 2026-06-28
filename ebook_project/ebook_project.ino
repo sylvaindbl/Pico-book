@@ -365,11 +365,13 @@ void highlight_word(String word){
   } else if ((data.font_selected==1)) {
     display.fillRect(tx - 2, 18, tw + 4, 20, WHITE); //adjust the box location based on the font
   }
-  /* if (tw > SCREENWIDTH){
-    display("")
-  }  */
+  
   display.setTextColor(BLACK);
   display.print(word); //print the text
+  if (tw >= SCREEN_WIDTH-5){
+    display.setTextColor(BLACK);
+    display.print("-");
+  } 
   display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
 }
 
