@@ -8,7 +8,7 @@
 #include "book.h"
 using namespace Adafruit_LittleFS_Namespace;
 
-// ── Display ──────────────────────────────────────────
+// Display
 #define SCREEN_WIDTH  128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET    -1
@@ -18,7 +18,7 @@ using namespace Adafruit_LittleFS_Namespace;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// ── Joystick ─────────────────────────────────────────
+// Joystick
 #define JOY_X   A0
 #define JOY_Y   A2
 #define JOY_BTN 1
@@ -42,9 +42,9 @@ struct SavedData {
   int font_selected = 0;
   int dark_mode = 1;
   int highlight = 0;
-  int current_word = 1;
+  int current_word = 0;
   int current_page = 0;
-  int32_t current_character = 1;
+  int32_t current_character = 0;
 } data;
 
 File file(InternalFS);
@@ -135,10 +135,6 @@ void loop() {
     int joy_x   = analogRead(JOY_X);         // 0 - 1023
     int joy_y   = analogRead(JOY_Y);         // 0 - 1023
     btn    = !digitalRead(JOY_BTN);     // true when button is pressed
-  Serial.println("x");
-  Serial.println(joy_x);
-  Serial.println("y");
-  Serial.println(joy_y);
   display.clearDisplay();
   display.setCursor(0, 0);
   joy_left=false, joy_right=false, joy_up=false, joy_down=false;
@@ -193,6 +189,7 @@ void settings_page(){
     { "highlight word", &data.highlight, 0, 1},
     { "dark mode", &data.dark_mode, 0, 1},
     { "font", &data.font_selected, 0, 1},
+    { "factory reset", }
   };
   display.print("--settings page--");
       
@@ -212,7 +209,12 @@ void settings_page(){
   }
 
   if (joy_left && !last_joy_left){//joystick was just moved to the left
-    //highlight? highlight= false: highlight=true;
+    data.current_character=0;
+    data.current_word=0;
+    display.clearDisplay();
+    display.print("reset!");
+    display.display();
+    delay(1000);
   } 
   last_joy_left = joy_left;
   if (joy_right && !last_joy_right){//joystick was just moved to the right
@@ -257,43 +259,6 @@ void settings_page(){
   display.print("press button to save"); 
 }
 
-int getPreviousWordLength(unsigned long character_index) {
-  //skip back over the separator before the previous word
-  while (character_index > 0) {
-    char c = pgm_read_byte(&BOOK[character_index - 1]);
-    if (c != ' ' && c != '\n' && c != '\r') break;
-    character_index--;
-  }
-  //skip back over the previous word
-  int count_character=0; //again, a variable only used for counting
-  while (character_index > 0) {
-    char c = pgm_read_byte(&BOOK[character_index - 1]);
-    if (c == ' ' || c == '\n' || c == '\r') break;
-    character_index--; count_character++;
-  }
-  return ++count_character;
-}
-String getWord(unsigned long character_index) {
-  String word = "";
-
-  // skip leading spaces/newlines
-  while (character_index < BOOK_SIZE_CHARACTERS) {
-    char c = pgm_read_byte(&BOOK[character_index]);
-    if (c != ' ' && c != '\n' && c != '\r') break;
-    character_index++;
-  }
-  word_length=0;
-  // read characters until next space/newline
-  while (character_index < BOOK_SIZE_CHARACTERS) {
-    char c = pgm_read_byte(&BOOK[character_index]);
-    if (c == ' ' || c == '\n' || c == '\r') break;
-    word += c;
-    character_index++; word_length++;
-  }
-  word_length++;
-
-  return word;
-}
 void main_page(){
 
   uint32_t now = millis(); //current time in milliseconds
@@ -303,9 +268,10 @@ void main_page(){
   if(joy_left) {
     if (millis()- last_time >= interval) { //joystick is on the left for more than the interval
       last_time = millis();
-      if(data.current_character > 1) {
+      if(data.current_word > 0) {
         data.current_word--;//update counter
         data.current_character -= getPreviousWordLength(data.current_character);//go to the character index of the previous word
+        Serial.println("left");
       } else {
         data.current_character=0;
       }
@@ -316,7 +282,7 @@ void main_page(){
     if (millis()- last_time >= interval) { //joystick is on the right for more than the interval
       i++;
       last_time = millis();
-      if(data.current_character<BOOK_SIZE_CHARACTERS) {
+      if(data.current_word<BOOK_SIZE_WORDS) {
         data.current_word++;//update word counter
         data.current_character += word_length;
         }//go to next word until end of text
@@ -354,7 +320,7 @@ void main_page(){
 
   //display progression: current character over total
   display.setCursor(0, SCREEN_HEIGHT-10);
-  display.print(data.current_word);
+  display.print(data.current_word+1);
   display.print("/");
   display.print(BOOK_SIZE_WORDS);
 
@@ -368,4 +334,42 @@ void main_page(){
   char buffer[4];
   sprintf(buffer,"%3d", speed); //format speed to be aligned on the right of the screen
   display.print(buffer);
+}
+
+int getPreviousWordLength(unsigned long character_index) {
+  //skip back over the separator before the previous word
+  while (character_index > 0) {
+    char c = pgm_read_byte(&BOOK[character_index - 1]);
+    if (c != ' ' && c != '\n' && c != '\r') break;
+    character_index--;
+  }
+  //skip back over the previous word
+  int count_character=0; //again, a variable only used for counting
+  while (character_index > 0) {
+    char c = pgm_read_byte(&BOOK[character_index - 1]);
+    if (c == ' ' || c == '\n' || c == '\r') break;
+    character_index--; count_character++;
+  }
+  return ++count_character;
+}
+String getWord(unsigned long character_index) {
+  String word = "";
+
+  // skip leading spaces/newlines
+  while (character_index < BOOK_SIZE_CHARACTERS) {
+    char c = pgm_read_byte(&BOOK[character_index]);
+    if (c != ' ' && c != '\n' && c != '\r') break;
+    character_index++;
+  }
+  word_length=0;
+  // read characters until next space/newline
+  while (character_index < BOOK_SIZE_CHARACTERS) {
+    char c = pgm_read_byte(&BOOK[character_index]);
+    if (c == ' ' || c == '\n' || c == '\r') break;
+    word += c;
+    character_index++; word_length++;
+  }
+  word_length++;
+
+  return word;
 }
