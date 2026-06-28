@@ -58,6 +58,11 @@ void saveData() {
   }
 }
 
+void reset(){
+  data.current_character=0;
+  data.current_word=0;
+}
+
 void setup() {
   Serial.begin(115200);
   InternalFS.begin();
@@ -103,8 +108,11 @@ void setup() {
   // Counting the total number of words
   count_character = 0; //reset of the counting variable
   while (count_character < BOOK_SIZE_CHARACTERS) {
-    getWord(count_character);
-    BOOK_SIZE_WORDS ++;
+    if (getWord(count_character)=="NO WORD"){
+      //not counting this
+    } else{
+      BOOK_SIZE_WORDS ++;
+    }
     count_character += word_length;
   }
   BOOK_SIZE_WORDS --; //because the terminating char is seen as a word
@@ -112,21 +120,6 @@ void setup() {
   //reset
   /* data.current_character = 0;
   data.current_word = 1; */
-}
-
-void highlight_word(String word){
-  int16_t tx, ty;
-  uint16_t tw, th;
-  display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
-  if (data.font_selected==1) {
-    display.fillRect(tx - 2, ty + 13, tw + 4, th + 4, WHITE);//change the box location if font 1 is selected
-  } else {
-    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
-  }
-    //add white rectangle behind it
-  display.setTextColor(BLACK);
-  display.print(word); //print the text
-  display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
 }
 
 //function runned every frame
@@ -189,7 +182,6 @@ void settings_page(){
     { "highlight word", &data.highlight, 0, 1},
     { "dark mode", &data.dark_mode, 0, 1},
     { "font", &data.font_selected, 0, 1},
-    { "factory reset", }
   };
   display.print("--settings page--");
       
@@ -209,8 +201,7 @@ void settings_page(){
   }
 
   if (joy_left && !last_joy_left){//joystick was just moved to the left
-    data.current_character=0;
-    data.current_word=0;
+    reset();
     display.clearDisplay();
     display.print("reset!");
     display.display();
@@ -273,7 +264,7 @@ void main_page(){
         data.current_character -= getPreviousWordLength(data.current_character);//go to the character index of the previous word
         Serial.println("left");
       } else {
-        data.current_character=0;
+        //data.current_character=0;
       }
     }
   }
@@ -318,11 +309,11 @@ void main_page(){
   }
   display.setFont(0);
 
-  //display progression: current character over total
+  //display progression: current word over total
   display.setCursor(0, SCREEN_HEIGHT-10);
-  display.print(data.current_word+1);
+  display.print(data.current_word+1); //+1 so that it starts at one and not zero
   display.print("/");
-  display.print(BOOK_SIZE_WORDS);
+  display.print(BOOK_SIZE_WORDS+1);
 
   //indicate joysticks input
   display.setCursor(0, 0);
@@ -352,24 +343,41 @@ int getPreviousWordLength(unsigned long character_index) {
   }
   return ++count_character;
 }
+
 String getWord(unsigned long character_index) {
   String word = "";
-
-  // skip leading spaces/newlines
-  while (character_index < BOOK_SIZE_CHARACTERS) {
-    char c = pgm_read_byte(&BOOK[character_index]);
-    if (c != ' ' && c != '\n' && c != '\r') break;
-    character_index++;
-  }
-  word_length=0;
-  // read characters until next space/newline
-  while (character_index < BOOK_SIZE_CHARACTERS) {
-    char c = pgm_read_byte(&BOOK[character_index]);
-    if (c == ' ' || c == '\n' || c == '\r') break;
-    word += c;
-    character_index++; word_length++;
+    // skip leading spaces/newlines
+    while (character_index < BOOK_SIZE_CHARACTERS) {
+      char c = pgm_read_byte(&BOOK[character_index]);
+      if (c != ' ' && c != '\n' && c != '\r') break;
+      character_index++;
+    }
+    word_length=0;
+    // read characters until next space/newline
+    while (character_index < BOOK_SIZE_CHARACTERS) {
+      char c = pgm_read_byte(&BOOK[character_index]);
+      if (c == ' ' || c == '\n' || c == '\r') break;
+      word += c;
+      character_index++; word_length++;
+    }
+  if (word_length==0){
+    return "NO WORD";
   }
   word_length++;
 
   return word;
+}
+void highlight_word(String word){
+  int16_t tx, ty;
+  uint16_t tw, th;
+  display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
+  if (data.font_selected==1) {
+    display.fillRect(tx - 2, ty + 13, tw + 4, th + 4, WHITE);//change the box location if font 1 is selected
+  } else {
+    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
+  }
+    //add white rectangle behind it
+  display.setTextColor(BLACK);
+  display.print(word); //print the text
+  display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
 }
