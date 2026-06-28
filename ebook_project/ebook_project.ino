@@ -66,6 +66,7 @@ void saveData() {
 void reset(){
   data.current_character=0;
   data.current_word=0;
+  data.current_page=0;
 }
 
 //function that is called once at the beginning of the code
@@ -206,7 +207,7 @@ void settings_page(){
   if (joy_left && !last_joy_left){//joystick was just moved to the left
     reset();
     display.clearDisplay();
-    printCentered("reset the screen");
+    print_word("reset!", true, true);
     display.display();
     delay(1000);
   } 
@@ -242,8 +243,7 @@ void settings_page(){
   if (btn==false && lastbtnstate==true){
     data.current_page=0;
     display.clearDisplay();
-
-    printCentered("saved!");
+    print_word("saved!", true, false);
     set_font();
 
     display.display();
@@ -300,7 +300,10 @@ void main_page(){
     //saveData();
   }
   lastbtnstate= btn;
+  display.print(" --the pico book--");
+  display.setCursor(1, 15);
 
+  //beast mode when reaching speed 100
   if (data.speed == 100 && check == true) {
     char text[] = "BEAST MODE ACTIVATED";
     char buffer[21] = "";
@@ -310,7 +313,7 @@ void main_page(){
         buffer[j] = text[j];
         }
       String arduinoString = String(buffer);
-      printCentered(arduinoString);
+      print_word(arduinoString, true, false);
       display.display();
       delay (100);
     }
@@ -318,28 +321,13 @@ void main_page(){
   } else if (data.speed == 100 && check == false) {
       display.setCursor(SCREEN_WIDTH - 9, 0);
       display.print("X");
-    } else if (data.speed != 100) {
-        check = true;
-     }
-  display.print(" --the pico book--");
-
-    display.setCursor(1, 15);
-    if(data.font_selected==1){
-    display.setCursor(0, 25);
-    display.setFont(&FreeMono9pt7b);
+  } else if (data.speed != 100) {
+      check = true;
   }
-  //set font
-  set_font();
   
-  if (data.highlight) {
-    highlight_word(getWord(data.current_character));
-  } else {
-    display.print(getWord(data.current_character));
-  }
+
+  print_word(getWord(data.current_character), false, data.highlight);
   display.setFont(0);
-
-
-  
 
   //display progression: current word over total
   display.setCursor(0, SCREEN_HEIGHT-10);
@@ -357,14 +345,6 @@ void main_page(){
   char buffer[4];
   sprintf(buffer,"%3d", data.speed); //format speed to be aligned on the right of the screen
   display.print(buffer);
-}
-
-void printCentered (String text) {
-  int16_t tx, ty;
-  uint16_t tw, th;
-  display.getTextBounds(text, 0, 0, &tx, &ty, &tw, &th);
-  display.setCursor((SCREEN_WIDTH)/2 - (tw/2), (SCREEN_HEIGHT/2) - (th/2));
-  display.print(text);
 }
 
 int getPreviousWordLength(unsigned long character_index) {
@@ -397,26 +377,37 @@ String getWord(unsigned long character_index) {
     word_length += leading + 1;  // include skipped whitespace + one trailing separator
     return word;
 }
-void highlight_word(String word){
+void print_word(String word, bool centered, bool highlight){
   int16_t tx, ty;
   uint16_t tw, th;
-  display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
-  if (data.font_selected==0) {
-    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);//add white rectangle behind the text
-  } else if (data.font_selected==2){
-    display.fillRect(tx - 2, 8, tw + 4, 20, WHITE);//adjust the box location based on the font
-  } else if ((data.font_selected==1)) {
-    display.fillRect(tx - 2, 18, tw + 4, 20, WHITE); //adjust the box location based on the font
-  }
+  set_font();
   
-  display.setTextColor(BLACK);
+  if (highlight) {
+    display.setTextColor(WHITE);
+    display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
+    display.print(tw);
+    display.print(th);
+    if (data.font_selected==0) {
+      display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);//add white rectangle behind the text
+    } else if (data.font_selected==2){
+      display.fillRect(tx - 2, 8, tw + 4, 20, WHITE);//adjust the box location based on the font
+    } else if ((data.font_selected==1)) {
+      display.fillRect(tx - 2, 18, tw + 4, 20, WHITE); //adjust the box location based on the font
+    }  
+    display.setTextColor(BLACK);
+  } else{
+    display.setTextColor(WHITE);
+  }
+  if (centered) {
+    display.getTextBounds(word, 0, 0, &tx, &ty, &tw, &th);
+    display.setCursor((SCREEN_WIDTH)/2 - (tw/2), (SCREEN_HEIGHT/2) - (th/2));
+  } 
   display.print(word); //print the text
   if (tw >= SCREEN_WIDTH-5){
-    display.setTextColor(BLACK);
-    display.print("-");
+    //display.print("-");
   } 
   display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
-}
+} 
 
 void set_font(){ //changes font according to the one chosen in the settings
   display.setCursor(1, 15);
