@@ -40,6 +40,8 @@ bool joy_left, joy_right, joy_up, joy_down, btn;
 
 int interval;
 
+bool check = true;
+
 struct SavedData {
   int font_selected = 0;
   int dark_mode = 1;
@@ -204,7 +206,7 @@ void settings_page(){
   if (joy_left && !last_joy_left){//joystick was just moved to the left
     reset();
     display.clearDisplay();
-    display.print("reset!");
+    printCentered("reset the screen");
     display.display();
     delay(1000);
   } 
@@ -240,10 +242,10 @@ void settings_page(){
   if (btn==false && lastbtnstate==true){
     data.current_page=0;
     display.clearDisplay();
-    display.setCursor(10, 25);
+
+    printCentered("saved!");
     set_font();
-    display.printf("saved!");
-    display.setFont(0);
+
     display.display();
     saveData();
   }
@@ -299,6 +301,33 @@ void main_page(){
   }
   lastbtnstate= btn;
 
+  if (data.speed == 100 && check == true) {
+    char text[] = "BEAST MODE ACTIVATED";
+    char buffer[21] = "";
+    for (int i = 0; i < 21; i++) {
+      display.clearDisplay();
+      for (int j = 0; j < i; j++) {
+        buffer[j] = text[j];
+        }
+      String arduinoString = String(buffer);
+      printCentered(arduinoString);
+      display.display();
+      delay (100);
+    }
+    check = false;
+  } else if (data.speed == 100 && check == false) {
+      display.setCursor(SCREEN_WIDTH - 9, 0);
+      display.print("X");
+    } else if (data.speed != 100) {
+        check = true;
+     }
+  display.print(" --the pico book--");
+
+    display.setCursor(1, 15);
+    if(data.font_selected==1){
+    display.setCursor(0, 25);
+    display.setFont(&FreeMono9pt7b);
+  }
   //set font
   set_font();
   
@@ -328,6 +357,14 @@ void main_page(){
   char buffer[4];
   sprintf(buffer,"%3d", data.speed); //format speed to be aligned on the right of the screen
   display.print(buffer);
+}
+
+void printCentered (String text) {
+  int16_t tx, ty;
+  uint16_t tw, th;
+  display.getTextBounds(text, 0, 0, &tx, &ty, &tw, &th);
+  display.setCursor((SCREEN_WIDTH)/2 - (tw/2), (SCREEN_HEIGHT/2) - (th/2));
+  display.print(text);
 }
 
 int getPreviousWordLength(unsigned long character_index) {
