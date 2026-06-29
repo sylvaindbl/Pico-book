@@ -17,7 +17,7 @@ using namespace Adafruit_LittleFS_Namespace;
 #define OLED_RESET    -1
 #define OLED_ADDRESS  0x3C
 #define CHARACTER_WIDTH 5
-#define MAX_SETTINGS 3
+#define MAX_SETTINGS 4
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
@@ -46,6 +46,7 @@ struct SavedData {
   int font_selected = 0;
   int dark_mode = 1;
   int highlight = 0;
+  int centered = 0;
   int current_word = 0;
   int current_page = 0;
   int32_t current_character = 0;
@@ -186,10 +187,11 @@ void settings_page(){
     { "highlight word", &data.highlight, 0, 1},
     { "dark mode", &data.dark_mode, 0, 1},
     { "font", &data.font_selected, 0, 2},
+    { "centered text", &data.centered, 0, 1},
   };
   display.print("--settings page--");
       
-  display.setCursor(0, 20);
+  display.setCursor(0, 15);
 
   for (int i=0; i<MAX_SETTINGS; i++){
     if (i==current_setting){
@@ -207,7 +209,7 @@ void settings_page(){
   if (joy_left && !last_joy_left){//joystick was just moved to the left
     reset();
     display.clearDisplay();
-    print_word("reset!", true, true);
+    print_word("reset!", true, true, 0);
     display.display();
     delay(1000);
   } 
@@ -240,12 +242,10 @@ void settings_page(){
   }
 
   //tracks release of a button
-  if (btn==false && lastbtnstate==true){
+  if (btn==false && lastbtnstate==true){ //saves the current settings and current word when text is selected
     data.current_page=0;
     display.clearDisplay();
-    print_word("saved!", true, false);
-    set_font();
-
+    print_word("saved!", true, false, 0); 
     display.display();
     saveData();
   }
@@ -313,7 +313,7 @@ void main_page(){
         buffer[j] = text[j];
         }
       String arduinoString = String(buffer);
-      print_word(arduinoString, true, false);
+      print_word(arduinoString, true, false, 0);
       display.display();
       delay (100);
     }
@@ -325,9 +325,9 @@ void main_page(){
       check = true;
   }
   
-
-  print_word(getWord(data.current_character), false, data.highlight);
-  display.setFont(0);
+  //print the current word
+  print_word(getWord(data.current_character), data.centered, data.highlight, data.font_selected);
+  set_font(0);
 
   //display progression: current word over total
   display.setCursor(0, SCREEN_HEIGHT-10);
@@ -377,44 +377,52 @@ String getWord(unsigned long character_index) {
     word_length += leading + 1;  // include skipped whitespace + one trailing separator
     return word;
 }
-void print_word(String word, bool centered, bool highlight){
+void print_word(String word, bool centered, bool highlight, int font){
   int16_t tx, ty;
   uint16_t tw, th;
-  set_font();
+  uint16_t x=0, y=0;
+
+    
+  set_font(font);
+  display.getTextBounds(word, 0, 0, &tx, &ty, &tw, &th);
+  if (centered){
+    x= (SCREEN_WIDTH/2) - (tw/2);
+  }
   
+  y= (SCREEN_HEIGHT/2) - (th/2);
+  if (font==0) {
+      y--;
+    } else if (font==2){
+      y += 5;
+      if (centered) x -= 5;
+    } else if ((font==1)) {
+      y += 5;
+      if (centered) x -= 5;
+    }
   if (highlight) {
     display.setTextColor(WHITE);
-    display.getTextBounds(word, 0, 15, &tx, &ty, &tw, &th);//take boundaries of the word
-    display.print(tw);
-    display.print(th);
-    if (data.font_selected==0) {
-      display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);//add white rectangle behind the text
-    } else if (data.font_selected==2){
-      display.fillRect(tx - 2, 8, tw + 4, 20, WHITE);//adjust the box location based on the font
-    } else if ((data.font_selected==1)) {
-      display.fillRect(tx - 2, 18, tw + 4, 20, WHITE); //adjust the box location based on the font
-    }  
+    display.getTextBounds(word, x, y, &tx, &ty, &tw, &th);//take boundaries of the word
+    
+    display.fillRect(tx - 2, ty - 2, tw + 4, th + 4, WHITE);
+    
     display.setTextColor(BLACK);
   } else{
     display.setTextColor(WHITE);
   }
-  if (centered) {
-    display.getTextBounds(word, 0, 0, &tx, &ty, &tw, &th);
-    display.setCursor((SCREEN_WIDTH)/2 - (tw/2), (SCREEN_HEIGHT/2) - (th/2));
-  } 
+    display.setCursor(x, y);
   display.print(word); //print the text
   if (tw >= SCREEN_WIDTH-5){
-    //display.print("-");
+    display.print("-");
   } 
   display.setTextColor(WHITE); //go back to default mode for text that appears aftwerwards
 } 
 
-void set_font(){ //changes font according to the one chosen in the settings
+void set_font(int font){ //changes font according to the one chosen in the settings
   display.setCursor(1, 15);
-  if(data.font_selected==1){
+  if(font==1){
     display.setCursor(0, 25);
     display.setFont(&FreeMono9pt7b);
-  } else if(data.font_selected==2){
+  } else if(font==2){
     display.setFont(&FreeSerif9pt7b);
   } else {
     display.setFont(0);
