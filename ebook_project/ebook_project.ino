@@ -40,7 +40,7 @@ bool joy_left, joy_right, joy_up, joy_down, btn;
 
 int interval;
 
-bool check = true;
+bool beastCondition = true;
 
 struct SavedData {
   int font_selected = 0;
@@ -301,26 +301,27 @@ void main_page(){
   }
   lastbtnstate= btn;
 
-  if (data.speed == 100 && check == true) {
+  //animation + setting the titel to beast mode when reaching speed of 100
+  if (data.speed == 100 && beastCondition == true) {    //when speed changes to 100 for the first time
     char text[] = "BEAST MODE ACTIVATED";
     char buffer[21] = "";
-    for (int i = 0; i < 21; i++) {
+    for (int i = 0; i < 21; i++) {    //animation
       display.clearDisplay();
       for (int j = 0; j < i; j++) {
           buffer[j] = text[j];
         }
         String arduinoString = String(buffer);
-        printCentered(arduinoString);
+        printCentered(arduinoString);   //because char test[] is the c way of writig strings and printCentered only takes Arduino "Strings" as inputs
         display.display();
         delay (100);
       }
-      check = false;
-    } else if (data.speed == 100 && check == false) {
+      beastCondition = false;   //to ensure the animation is not going to loop for ever
+    } else if (data.speed == 100 && beastCondition == false) {    //when speed is at 100 but the animation already ran
       display.setCursor(10 , 0);
       display.print("Beast Mode active");
-    } else if (data.speed != 100) {
+    } else if (data.speed != 100) {   //when speed is below 100
       display.print(" --the pico book--");
-      check = true;
+      beastCondition = true;
     }
   
 
