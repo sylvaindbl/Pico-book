@@ -40,7 +40,7 @@ bool joy_left, joy_right, joy_up, joy_down, btn;
 
 int interval;
 
-bool check = true;
+bool beastCondition = true;
 
 struct SavedData {
   int font_selected = 0;
@@ -303,14 +303,14 @@ void main_page(){
   display.print(" --the pico book--");
   display.setCursor(1, 15);
 
-  //beast mode when reaching speed 100
-  if (data.speed == 100 && check == true) {
+  //animation + setting the title to beast mode when reaching speed of 100
+  if (data.speed == 100 && beastCondition == true) {    //when speed changes to 100 for the first time
     char text[] = "BEAST MODE ACTIVATED";
     char buffer[21] = "";
-    for (int i = 0; i < 21; i++) {
+    for (int i = 0; i < 21; i++) {    //animation
       display.clearDisplay();
       for (int j = 0; j < i; j++) {
-        buffer[j] = text[j];
+          buffer[j] = text[j];
         }
       String arduinoString = String(buffer);
       print_word(arduinoString, true, false, 0);
@@ -318,12 +318,12 @@ void main_page(){
       delay (50);
     }
     delay (300);
-    check = false;
-  } else if (data.speed == 100 && check == false) {
+    beastCondition = false;
+  } else if (data.speed == 100 && beastCondition == false) {
       display.setCursor(SCREEN_WIDTH - 9, 0);
       display.print("X");
   } else if (data.speed != 100) {
-      check = true;
+      beastCondition = true;
   }
   
   //print the current word
