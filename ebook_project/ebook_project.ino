@@ -209,7 +209,7 @@ void settings_page(){
   if (joy_left && !last_joy_left){//joystick was just moved to the left
     reset();
     display.clearDisplay();
-    print_word("reset!", true, true, 0);
+    print_word("reset!", true, data.highlight, data.font_selected);
     display.display();
     delay(1000);
   } 
@@ -245,7 +245,7 @@ void settings_page(){
   if (btn==false && lastbtnstate==true){ //saves the current settings and current word when text is selected
     data.current_page=0;
     display.clearDisplay();
-    print_word("saved!", true, false, 0); 
+    print_word("saved!", true, data.highlight, data.font_selected); 
     display.display();
     saveData();
   }
@@ -315,8 +315,9 @@ void main_page(){
       String arduinoString = String(buffer);
       print_word(arduinoString, true, false, 0);
       display.display();
-      delay (100);
+      delay (50);
     }
+    delay (300);
     check = false;
   } else if (data.speed == 100 && check == false) {
       display.setCursor(SCREEN_WIDTH - 9, 0);
