@@ -130,7 +130,7 @@ void setup() {
 //function running every frame
 void loop() {
   //Read joystick
-    int joy_x   = analogRead(JOY_X);         // 0 - 1023
+    int joy_x   = analogRead(JOY_X);   // 0 - 1023
     int joy_y   = analogRead(JOY_Y);         // 0 - 1023
     btn    = !digitalRead(JOY_BTN);     // true when button is pressed
   display.clearDisplay();
